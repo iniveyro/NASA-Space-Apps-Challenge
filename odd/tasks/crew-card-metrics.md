@@ -22,20 +22,20 @@ Make astronaut cards lighter and four vital tiles visibly status-tinted with str
   - Rollback: overview styling/history charts and their tests only; shared data and other features unaffected.
   - Commit: `bb3f9ca` (feature, tests and evidence). RDD: disabled/unmanaged. Authored line count: 260 including the task document, excluding pre-existing lockfile edits. Native risk assessment unavailable due to untracked-file declaration; treated high for verification and independent verifier completed. Parent spot check: mini-chart unit tests 4/4 passed.
 
-- [ ] T2 — Correct the card surface to very light gray, improve chart contrast, and remove crew health/activity badges and visible "7-day trend" text.
+- [x] T2 — Correct the card surface to very light gray, improve chart contrast, and remove crew health/activity badges and visible "7-day trend" text.
   - User feedback: T1 stayed dark navy and did not meet the intended light background; supersede that visual choice, preserve its mission charts.
   - Route: delegated direct; multiple UI files and matching e2e assertions require coordinated changes.
   - Acceptance: existing bg-surface-muted with dark readable card text; status tiles retain vivid fills; high-contrast chart strokes and dashed BP secondary trace; no visible trend caption or crew health/activity badges; metric status labels and oxygen data semantics retained. Existing shared tokens only.
   - Scope extension: e2e/layout.spec.ts only to update the card background assertion; no other feature or shared config/data edits.
   - Checks: same full suite as T1 with .artifacts excluded from lint; screenshot with installed Chrome to verify actual light-gray background and chart contrast.
   - TDD: off, explicit user choice to test after implementation. RDD: off, unchanged.
-  - Forecast: about 100–130 additional authored lines; feature total expected under 400. Commit/check evidence pending.
+  - Forecast: about 100–130 additional authored lines; feature total expected under 400. Actual work-unit count: 99 authored lines; cumulative 359 before closeout documentation.
   - Implementation: outer card and link now use `bg-surface-muted` with readable dark text; crew health/activity badges and visible trend captions are removed; per-metric scenario labels and accessible chart history labels remain. Chart paths/markers use white and blood-pressure diastolic is dashed; the SpO₂ row/data remain unchanged.
   - Contrast verification: e2e reads the compiled status-fill and chart paint values and asserts every chart path/marker is at least 3:1 against each status fill. White-to-fill ratios: ok 7.13:1; warn 6.85:1; alert 8.31:1; unknown 7.58:1.
   - Verification: `npm run lint -- --ignore-pattern ".artifacts/**"` passed; `npm run typecheck` passed; `npm test` passed (43 tests); `npm run build` passed; `npm run test:e2e` passed (28 tests).
   - Screenshots: `.artifacts/crew-card-metrics-t2-desktop.png` and `.artifacts/crew-card-metrics-t2-mobile.png`, captured with installed Chrome and visually inspected.
-  - Commit: pending parent diff readback. No RDD review was started.
+  - Commit: `4c15160`. Native risk: medium; RDD disabled/unmanaged. Independent verification: overview/layout e2e 14/14 passed; parent focused unit spot check 4/4 passed. Parent inspected desktop/mobile screenshots and component diffs.
   - Rollback: T2 presentation and its e2e assertions, without reverting existing chart/data behavior.
 
 ## Progress and next step
-T1 committed; T2 implementation and verification complete, pending parent diff readback and commit. Preserve oxygen and pre-existing lockfile edits. No push or PR performed. Engram mirror topic: `odd/crew-card-metrics/tasks`.
+T1 and T2 committed and verified; next step is user visual review. Preserve oxygen and pre-existing lockfile edits. No push or PR performed. Engram mirror topic: `odd/crew-card-metrics/tasks`.
