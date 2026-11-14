@@ -1,31 +1,29 @@
 # ASTRA Health
 
-ASTRA Health is a responsive, single-screen crew wellness dashboard prototype. It uses local fictional profiles to demonstrate how a mission team might browse wellness signals; it does not connect to spacecraft systems or provide medical guidance.
+ASTRA Health is a local, fictional astronaut wellness dashboard. The crew overview compares four people at once; an individual profile presents simulated readings, history, and an interactive body-map guide. It is an interface prototype, not telemetry or medical guidance.
 
 ## Quick start
 
-1. Open `index.html` directly in a current desktop or mobile browser. The prototype has no build step, runtime dependencies, or network requests.
-2. Select a crew profile, a metric card, a body-map region, or the 7/30-day range to explore the linked view.
-3. Run the checks below after changing the data helpers or interface.
+1. Open `index.html` directly in a current browser. No build step, runtime dependency, or network request is required.
+2. Select **View profile** to open `#astronaut/<id>`, or use **Back to crew overview**. Both routes work as direct links and retain browser back/forward behavior.
+3. Select any metric, body-map region, or 7/30-day range to explore the deterministic fictional history.
 
-Optional loopback preview:
+An optional local preview server is available with Python:
 
 ```sh
 python -m http.server 4173 --bind 127.0.0.1
 ```
 
-Then open `http://127.0.0.1:4173` in a browser.
+## What the prototype shows
 
-## Demo behavior
+- Four fictional profiles with age, weight, sex, independent health/activity labels, and four crew-overview readings: heart rate, paired blood pressure, temperature, and cumulative radiation dose.
+- Ten individual readings: heart rate, blood pressure, temperature, sleep, mood, activity, SpO₂, glucose, self-reported stress, and cumulative radiation.
+- Deterministic 30-day histories; the 7-day view is the latest week of the same data. Blood pressure keeps separate systolic and diastolic series.
+- SpO₂ and glucose are simulated point readings, not continuous sensor streams. Mood and stress are self-reported scales, not brain measurements.
+- Radiation is cumulative, nonnegative, nondecreasing mGy; it is not shown as a rate. Bone-health information is educational only and does not estimate personal bone density or future loss.
+- The body map is a navigation aid. Hover/focus previews a region, while selecting it changes the related history. Plot-wide pointer and touch selection finds the nearest date.
 
-- Four fictional crew profiles include stable, monitoring, simulated-alert, and resting examples. Activity/rest state is separate from the health-scenario label.
-- Six selectable metrics show deterministic 30-day histories; the 7-day view is the latest week of the same history.
-- Heart-rate, temperature, and blood-pressure histories use lines; sleep and activity use bars; mood uses a labelled 1–5 scale. Blood pressure retains distinct systolic and diastolic series.
-- The front-view body map is a navigation aid: heart opens pulse and pressure, brain opens self-reported sleep and mood, and whole body opens temperature and activity. These associations do not measure organs.
-- Hover or focus a body-map region to preview its description; pointer exit or blur restores the selected region. Tap/click selects it.
-- Chart marks support keyboard focus. Pointer movement and touch anywhere in the plot select the nearest date; blood-pressure tooltips show paired systolic and diastolic values.
-
-All readings, names, dates, statuses, and observations are authored fictional fixtures. Values are not generated from clinical thresholds, are not telemetry, and must not be used for diagnosis, treatment, or operational decisions.
+All names, values, dates, labels, and statuses are fictional fixtures. No clinical thresholds or treatment recommendations are used. Bone-health background: [NASA, Risk of Spaceflight-Induced Bone Changes](https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/).
 
 ## Verification
 
@@ -33,22 +31,18 @@ All readings, names, dates, statuses, and observations are authored fictional fi
 node --check app.js
 node --check data.js
 node --test tests/*.test.cjs
-```
-
-Optional browser regression smoke (requires local Python and Chrome at `C:/Program Files/Google/Chrome/Application/chrome.exe`; no packages are installed):
-
-```sh
 node tests/browser-smoke.cjs
 ```
 
-The smoke runner starts a loopback-only HTTP server and a temporary headless Chrome profile, checks body previews, metric/range changes, axis labels and off-mark touch selection at 320px, and stops both processes on exit.
+The browser smoke test uses local Python and Chrome at `C:/Program Files/Google/Chrome/Application/chrome.exe`; it does not install packages or access remote services. It checks routes/history, profile and metric consistency, body-map behavior, chart periods, nearest-date touch interaction, reduced motion, and 1440px/390px/320px overflow. Screenshots are written to ignored `.artifacts/` files.
 
-## Structure
+## Files
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Semantic dashboard structure and inline anatomy illustration |
-| `styles.css` | Responsive light medical-space interface and reduced-motion rules |
-| `data.js` | Deterministic fictional fixtures and testable history helpers |
-| `app.js` | Crew, metric, body-map, period, and SVG chart interactions |
-| `tests/data.test.cjs` | Built-in Node tests for fixture and series invariants |
+| `index.html` | Accessible two-view structure and inline body illustration |
+| `styles.css` | Responsive light interface, focus states, and reduced-motion behavior |
+| `data.js` | Fictional profiles, metric definitions, and deterministic histories |
+| `app.js` | Hash routing, view rendering, body-map interaction, and SVG charts |
+| `tests/data.test.cjs` | Built-in Node tests for data invariants |
+| `tests/browser-smoke.cjs` | Local Chrome/CDP regression checks |

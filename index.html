@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fa">
-  <meta name="description" content="ASTRA Health — a local, fictional crew-health dashboard prototype.">
+  <meta name="description" content="ASTRA Health is a local fictional astronaut wellness dashboard prototype.">
   <link rel="icon" href="data:,">
   <title>ASTRA Health · Crew wellness</title>
   <link rel="stylesheet" href="styles.css">
@@ -12,87 +12,76 @@
   <script defer src="app.js"></script>
 </head>
 <body>
-  <div class="shell">
-    <aside class="rail" aria-label="Mission navigation">
-      <a class="brand" href="#overview" aria-label="ASTRA Health overview">
-        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="16"/><ellipse cx="22" cy="22" rx="7" ry="18" transform="rotate(42 22 22)"/><path d="M22 14v16m-8-8h16"/></svg></span>
-        <span class="brand-copy"><strong>ASTRA</strong><small>HEALTH SYSTEMS</small></span>
+  <div class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="#crew" aria-label="ASTRA Health crew overview">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span><strong>ASTRA Health</strong><small>Mission wellness console</small></span>
       </a>
-      <nav class="rail-nav">
-        <a class="nav-link active" href="#overview" aria-current="page"><span class="nav-icon">⌂</span><span>Overview</span></a>
-        <a class="nav-link" href="#crew"><span class="nav-icon">♧</span><span>Crew</span></a>
-        <a class="nav-link" href="#body-map"><span class="nav-icon">◉</span><span>Body map</span></a>
-        <a class="nav-link" href="#trends"><span class="nav-icon">⌁</span><span>Trends</span></a>
-      </nav>
-      <div class="rail-foot"><span class="signal-dot"></span><span>LOCAL DEMO</span><small>NO LIVE TELEMETRY</small></div>
-    </aside>
+      <div class="mission-context"><span class="local-indicator" aria-hidden="true"></span><span>LOCAL DEMO · NO LIVE TELEMETRY</span><span class="mission-day">MISSION DAY 184</span></div>
+    </header>
 
-    <main id="overview" class="main-content">
-      <header class="topbar">
-        <div class="crumb"><span>MISSIONS</span><b>/</b><span>ARTEMIS TRANSIT</span><b>/</b><strong>CREW WELLNESS</strong></div>
-        <div class="top-meta"><span class="mission-clock"><span class="clock-dot"></span>MISSION DAY 184</span><span class="top-divider"></span><span>18 JUN 2042</span></div>
-      </header>
-
-      <section class="page-heading">
-        <div>
-          <div class="eyebrow"><span class="eyebrow-line"></span>CREW HEALTH MONITOR</div>
-          <h1>Good morning, <span id="greeting-name">Mira</span><span class="period">.</span></h1>
-          <p class="page-subtitle">A clear view of crew wellness across the mission.</p>
+    <main id="main-content">
+      <section id="crew-view" class="view" aria-labelledby="crew-title">
+        <div class="page-heading">
+          <div><p class="eyebrow">ARTEMIS TRANSIT · CREW HEALTH MONITOR</p><h1 id="crew-title" tabindex="-1">Crew overview</h1><p class="lede">Four fictional crew profiles. Select a person to explore individual trends.</p></div>
+          <p class="demo-note"><strong>Simulated data</strong><span>For interface demonstration only</span></p>
         </div>
-        <div class="demo-stamp"><span class="stamp-icon">✳</span><span><strong>Demo · Simulated data</strong><small>Fictional profiles for interface preview</small></span></div>
+        <div class="overview-heading"><div><h2>Mission crew</h2><p>Latest fictional readings · 18 Jun 2042</p></div><span id="crew-count" class="count-label">4 CREW MEMBERS</span></div>
+        <div id="crew-grid" class="crew-grid" aria-label="Crew health overview"></div>
+        <footer class="page-footer"><span>ASTRA HEALTH · MISSION WELLNESS CONSOLE</span><span>SIMULATED DATA · NOT FOR CLINICAL USE</span></footer>
       </section>
 
-      <section id="crew" class="crew-section" aria-labelledby="crew-heading">
-        <div class="section-title-row"><div><h2 id="crew-heading">Mission crew</h2><p>Choose a profile to explore its health snapshot.</p></div><span class="count-label">04 CREW MEMBERS</span></div>
-        <div id="crew-list" class="crew-list" aria-label="Select crew member"></div>
-      </section>
+      <section id="detail-view" class="view" aria-labelledby="detail-title" hidden>
+        <a id="back-to-crew" class="back-link" href="#crew"><span aria-hidden="true">←</span> Back to crew overview</a>
+        <div class="detail-heading">
+          <div class="identity-block"><span id="profile-avatar" class="avatar" aria-hidden="true"></span><div><p class="eyebrow">ASTRONAUT PROFILE · SIMULATED</p><h1 id="detail-title" tabindex="-1"></h1><p id="profile-role" class="lede"></p></div></div>
+          <div class="profile-demographics" aria-label="Fictional profile details"><div><span>Age</span><strong id="profile-age"></strong></div><div><span>Weight</span><strong id="profile-weight"></strong></div><div><span>Sex</span><strong id="profile-sex"></strong></div></div>
+        </div>
 
-      <section class="profile-strip" aria-live="polite">
-        <div class="profile-identity"><span id="profile-avatar" class="avatar avatar-violet">MC</span><div><div class="profile-name-row"><h2 id="profile-name">Mira Chen</h2><span id="health-badge" class="status-badge warning">● Monitoring</span></div><p id="profile-role">Commander · Flight engineer</p></div></div>
-        <div class="profile-note"><span class="note-icon">⌁</span><span id="profile-note"></span></div>
-        <div class="profile-context"><span class="context-label">WELLNESS SNAPSHOT</span><strong>Last sync <span>·</span> 08:42 UTC</strong><small>Selected crew member</small></div>
-      </section>
+        <div class="profile-status-row"><div class="status-group"><span id="health-status" class="status-text"></span><span id="activity-status" class="status-text"></span></div><p id="profile-note" class="scenario-note"></p></div>
 
-      <section class="metrics-section" aria-labelledby="metrics-heading">
-        <div class="section-title-row metrics-heading"><div><h2 id="metrics-heading">Health overview</h2><p>Latest simulated readings <span class="subtle-separator">·</span> 18 Jun 2042</p></div><span class="info-hint"><span class="info-circle">i</span> Select a card to explore its trend</span></div>
-        <div id="metric-grid" class="metric-grid"></div>
-      </section>
+        <section aria-labelledby="readings-title" class="readings-section">
+          <div class="section-heading"><div><h2 id="readings-title">Latest readings</h2><p>Fictional point readings · 18 Jun 2042</p></div><span class="hint">Choose a reading to view its history</span></div>
+          <div id="metric-grid" class="metric-grid"></div>
+        </section>
 
-      <section class="detail-layout">
-        <article id="body-map" class="panel body-panel" aria-labelledby="body-title">
-          <div class="panel-heading"><div><div class="eyebrow small-eyebrow">INTERACTIVE GUIDE</div><h2 id="body-title">Body map</h2></div><span class="panel-menu" aria-hidden="true">•••</span></div>
-          <p class="panel-intro">Select a region to explore related wellness signals.</p>
-          <div class="body-stage">
-            <div class="body-art" aria-label="Front view body illustration with interactive regions">
-              <svg class="anatomy" viewBox="0 0 260 390" role="img" aria-labelledby="anatomy-title anatomy-desc">
-                <title id="anatomy-title">Simplified front-view human anatomy</title><desc id="anatomy-desc">A neutral medical illustration. The highlighted heart, brain, and whole-body regions are navigational associations, not diagnostic measurements.</desc>
-                <defs><linearGradient id="skin" x1="0" x2="1"><stop stop-color="#e9edf2"/><stop offset=".5" stop-color="#f7f8fa"/><stop offset="1" stop-color="#e3e8ee"/></linearGradient></defs>
-                <path class="body-silhouette" d="M104 22c-7 4-11 13-10 22l2 12c-8 6-17 8-27 11-12 4-20 13-23 27l-15 62c-2 8 1 13 6 14 5 1 8-2 10-8l16-48-6 73c-1 7 3 11 8 11l-4 58c-1 8 4 12 9 12l5 88c0 8 5 12 10 12 7 0 10-5 10-12l8-82 8 82c0 7 4 12 10 12 6 0 10-4 9-12l5-88c6 0 10-5 9-12l-4-58c5 0 9-4 8-11l-6-73 16 48c2 6 5 9 10 8 5-1 8-6 6-14l-15-62c-3-14-11-23-23-27-10-3-19-5-27-11l2-12c1-9-3-18-10-22-8-4-17-4-25 0Z"/>
-                <path class="body-detail" d="M130 67v43m-35-33c11 9 23 13 35 13s24-4 35-13M94 111c10 8 22 12 36 12s26-4 36-12M130 124v119m-23-114v78m46-78v78M111 260l-4 38m32-38 4 38"/>
-                <path class="brain-shape" d="M119 38c-4-7 5-12 10-7 5-7 15-1 11 6 6 5 1 13-6 12h-15c-8-1-8-10 0-11Z"/>
-                <path class="heart-shape" d="M130 153c-7-10-19-3-15 7l15 16 15-16c4-10-8-17-15-7Z"/>
-                <path class="guide-line" d="M144 158h58l17-14m-101-108H72L56 45m57 137h-43l-14 12"/>
-                <circle class="guide-point" cx="144" cy="158" r="2.5"/><circle class="guide-point" cx="112" cy="40" r="2.5"/><circle class="guide-point" cx="114" cy="181" r="2.5"/>
-              </svg>
-              <button class="body-target target-brain" data-region="brain" aria-label="Explore brain-associated signals: self-reported sleep and mood" aria-describedby="body-callout-text" aria-pressed="false"><span class="target-ring"></span><span class="target-label">SLEEP &amp; MOOD</span></button>
-              <button class="body-target target-heart" data-region="heart" aria-label="Explore heart-associated signals: heart rate and blood pressure" aria-describedby="body-callout-text" aria-pressed="false"><span class="target-ring"></span><span class="target-label">PULSE &amp; PRESSURE</span></button>
-              <button class="body-target target-body" data-region="body" aria-label="Explore whole-body signals: temperature and activity" aria-describedby="body-callout-text" aria-pressed="false"><span class="target-ring"></span><span class="target-label">WHOLE BODY</span></button>
+        <div class="detail-grid">
+          <article class="panel body-panel" aria-labelledby="body-title">
+            <div class="panel-heading"><div><p class="eyebrow">INTERACTIVE GUIDE</p><h2 id="body-title">Body map</h2></div></div>
+            <p class="panel-intro">Select a region to find related signals. Associations are navigation aids, not organ measurements.</p>
+            <div class="body-stage">
+              <div class="body-art" aria-label="Front-view illustration with selectable signal groups">
+                <svg class="anatomy" viewBox="0 0 240 330" role="img" aria-labelledby="anatomy-title anatomy-desc">
+                  <title id="anatomy-title">Simplified front-view human figure</title><desc id="anatomy-desc">A neutral outline. Interactive regions link to related fictional readings, not anatomy measurements.</desc>
+                  <path class="body-silhouette" d="M96 24c-9 5-12 15-9 25l4 11c-9 5-18 8-27 11-11 4-17 12-20 24l-15 51c-2 7 1 12 6 13 4 1 7-2 9-8l15-39-4 58c0 7 3 10 8 11l-4 47c-1 7 3 10 8 10l5 70c0 7 4 11 9 11 6 0 9-4 9-11l7-65 7 65c0 7 4 11 10 11 5 0 9-4 8-11l5-70c5 0 9-4 8-10l-4-47c5-1 8-4 8-11l-4-58 15 39c2 6 5 9 9 8 5-1 8-6 6-13l-15-51c-3-12-9-20-20-24-9-3-18-6-27-11l4-11c3-10 0-20-9-25-8-4-18-4-26 0Z"/>
+                  <path class="body-detail" d="M120 64v35m-31-26c9 7 20 11 31 11s22-4 31-11M89 103c9 7 20 10 31 10s22-3 31-10m-31 11v91m-19-87v58m38-58v58m-20-59v17"/>
+                  <path class="brain-shape" d="M110 39c-4-6 4-10 9-6 4-6 12-1 9 5 5 4 1 10-5 10h-13c-6-1-6-8 0-9Z"/>
+                  <path class="heart-shape" d="M120 135c-6-8-16-2-12 6l12 13 12-13c4-8-6-14-12-6Z"/>
+                  <path class="lung-shape" d="M116 126c-8-5-15 2-14 11l-3 20c-1 6 4 9 9 6l12-10m4-27c8-5 15 2 14 11l3 20c1 6-4 9-9 6l-12-10"/>
+                </svg>
+                <button class="body-target target-brain" data-region="brain" aria-label="Explore self-reported sleep, mood and stress" aria-describedby="body-callout-text" aria-pressed="false"><span class="target-label">SELF-REPORTS</span></button>
+                <button class="body-target target-heart" data-region="heart" aria-label="Explore heart rate and blood pressure" aria-describedby="body-callout-text" aria-pressed="false"><span class="target-label">PULSE &amp; PRESSURE</span></button>
+                <button class="body-target target-lungs" data-region="lungs" aria-label="Explore simulated oxygen saturation point readings" aria-describedby="body-callout-text" aria-pressed="false"><span class="target-label">SpO₂</span></button>
+                <button class="body-target target-body" data-region="body" aria-label="Explore whole-body temperature, activity, glucose and radiation readings" aria-describedby="body-callout-text" aria-pressed="false"><span class="target-label">WHOLE BODY</span></button>
+              </div>
+              <p id="body-callout-text" class="body-callout" aria-live="polite">Choose a highlighted region.</p>
             </div>
-            <div class="body-callout" aria-live="polite"><span class="callout-rule"></span><span id="body-callout-text">Choose a highlighted region.</span></div>
-          </div>
-          <div class="association-note"><span class="info-circle">i</span><p>These regions are navigation shortcuts, not organ measurements. Sleep and mood are self-reported.</p></div>
-        </article>
+            <p class="association-note">The brain-associated items are self-reported, not brain measurements. SpO₂ and glucose are simulated point readings, not continuous sensor streams.</p>
+          </article>
 
-        <article id="trends" class="panel trend-panel" aria-labelledby="trend-title">
-          <div class="panel-heading trend-heading"><div><div class="eyebrow small-eyebrow">PERSONAL HISTORY</div><h2 id="trend-title">Wellness trends</h2></div><div class="range-toggle" role="group" aria-label="Chart date range"><button data-days="7" aria-pressed="false">7 days</button><button data-days="30" aria-pressed="true">30 days</button></div></div>
-          <div class="trend-selected"><div><span class="selected-dot"></span><strong id="chart-metric-title">Heart rate</strong><span id="chart-metric-unit">bpm</span></div><span id="chart-range-label">LAST 30 DAYS</span></div>
-          <div class="chart-wrap" id="chart-wrap"><div class="chart-tooltip" id="chart-tooltip" role="status" hidden></div><svg id="trend-chart" class="trend-chart" viewBox="0 0 700 250" role="img" aria-label="Heart rate trend chart"></svg></div>
-          <div id="chart-legend" class="chart-legend"></div>
-          <div class="chart-foot"><span><span class="chart-foot-dot"></span>Daily recorded value</span><span>Fictional history · not for clinical use</span></div>
-        </article>
+          <article class="panel trend-panel" aria-labelledby="trend-title">
+            <div class="panel-heading trend-heading"><div><p class="eyebrow">PERSONAL HISTORY</p><h2 id="trend-title">Wellness trends</h2></div><div class="range-toggle" role="group" aria-label="Chart date range"><button type="button" data-days="7" aria-pressed="false">7 days</button><button type="button" data-days="30" aria-pressed="true">30 days</button></div></div>
+            <div class="trend-selected"><div><span id="chart-metric-title">Heart rate</span><span id="chart-metric-unit">bpm</span></div><span id="chart-range-label">LAST 30 DAYS</span></div>
+            <div class="chart-wrap"><div class="chart-tooltip" id="chart-tooltip" role="status" hidden></div><svg id="trend-chart" class="trend-chart" viewBox="0 0 700 270" role="img" aria-label="Simulated heart rate history"></svg></div>
+            <div id="chart-legend" class="chart-legend"></div>
+            <div class="chart-foot"><span>Daily fictional point readings · not for clinical use</span></div>
+          </article>
+        </div>
+
+        <section class="bone-panel" aria-labelledby="bone-title"><div><p class="eyebrow">EDUCATIONAL CONTEXT</p><h2 id="bone-title">Bone health in spaceflight</h2></div><p>Spaceflight can affect bone health, and individual responses vary. This interface does not estimate personal bone density or predict bone loss.</p><a href="https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/" target="_blank" rel="noreferrer">Learn about spaceflight-induced bone changes at NASA <span aria-hidden="true">↗</span></a></section>
+        <footer class="page-footer"><span>ASTRA HEALTH · MISSION WELLNESS CONSOLE</span><span>SIMULATED DATA · NOT FOR CLINICAL USE</span></footer>
       </section>
-
-      <footer class="page-footer"><span><span class="footer-star">✳</span> ASTRA HEALTH <b>·</b> MISSION WELLNESS CONSOLE</span><span>DEMO ENVIRONMENT <b>·</b> SIMULATED DATA ONLY</span></footer>
     </main>
   </div>
 </body>

@@ -2,17 +2,34 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const data = require("../data.js");
 
-test("provides four uniquely identified fictional profiles and six supported metrics", () => {
+test("provides four uniquely identified fictional profiles with demographics and independent statuses", () => {
   assert.equal(data.PROFILES.length, 4);
   assert.equal(new Set(data.PROFILES.map((profile) => profile.id)).size, 4);
-  assert.equal(data.METRICS.length, 6);
-  assert.equal(new Set(data.METRICS.map((metric) => metric.id)).size, 6);
-  assert.deepEqual(data.PROFILES.map((profile) => profile.health), ["warning", "stable", "alert", "stable"]);
+  assert.ok(data.PROFILES.every((profile) => profile.age > 0 && profile.weightKg > 0 && profile.sex));
   assert.equal(data.PROFILES[3].activity, "resting");
   assert.equal(data.PROFILES[3].health, "stable");
+  assert.deepEqual(data.PROFILES.map((profile) => profile.health), ["monitoring", "stable", "simulated-alert", "stable"]);
 });
 
-test("every profile and metric has deterministic 7- and 30-day histories", () => {
+test("provides ten uniquely identified metrics with explicit units and regions", () => {
+  assert.equal(data.METRICS.length, 10);
+  assert.equal(new Set(data.METRICS.map((metric) => metric.id)).size, 10);
+  const metrics = Object.fromEntries(data.METRICS.map((metric) => [metric.id, metric]));
+  assert.equal(metrics.heartRate.unit, "bpm");
+  assert.equal(metrics.bloodPressure.unit, "mmHg");
+  assert.equal(metrics.temperature.unit, "°C");
+  assert.equal(metrics.spo2.unit, "%");
+  assert.equal(metrics.glucose.unit, "mg/dL");
+  assert.equal(metrics.radiation.unit, "mGy");
+  assert.equal(metrics.radiation.region, "body");
+  assert.equal(metrics.sleep.region, "brain");
+  assert.match(metrics.sleep.description, /self-reported/i);
+  assert.match(metrics.stress.description, /self-reported/i);
+  assert.match(metrics.spo2.description, /point reading.*not a continuous/i);
+  assert.match(metrics.glucose.description, /point reading.*not a continuous/i);
+});
+
+test("every profile and metric has deterministic 7- and 30-day histories with matching latest values", () => {
   for (const profile of data.PROFILES) {
     for (const metric of data.METRICS) {
       const history = data.getSeries(profile.id, metric.id, 30);
@@ -27,7 +44,7 @@ test("every profile and metric has deterministic 7- and 30-day histories", () =>
   }
 });
 
-test("blood pressure readings preserve separate paired systolic and diastolic series", () => {
+test("blood pressure retains separate paired systolic and diastolic readings", () => {
   for (const profile of data.PROFILES) {
     const readings = data.getSeries(profile.id, "bloodPressure", 30);
     assert.ok(readings.every(({ value }) => Number.isInteger(value.systolic) && Number.isInteger(value.diastolic)));
@@ -36,34 +53,24 @@ test("blood pressure readings preserve separate paired systolic and diastolic se
   }
 });
 
-test("activity state is independent from health state and profile-specific values", () => {
-  const restingCrew = data.getProfile("noah-williams");
-  assert.equal(restingCrew.activity, "resting");
-  assert.equal(restingCrew.health, "stable");
-  assert.equal(data.latest(restingCrew.id, "activity"), 8);
-  assert.equal(data.getProfile("mira-chen").health, "warning");
-  assert.equal(data.getProfile("sofia-alvarez").health, "alert");
-});
-
-test("body-map associations cover pulse and pressure, self-reported sleep and mood, and whole-body signals", () => {
-  const byId = Object.fromEntries(data.METRICS.map((metric) => [metric.id, metric]));
-  assert.deepEqual([byId.heartRate.region, byId.bloodPressure.region], ["heart", "heart"]);
-  assert.deepEqual([byId.sleep.region, byId.mood.region], ["brain", "brain"]);
-  assert.match(byId.sleep.description, /self-reported/i);
-  assert.match(byId.mood.description, /self-reported/i);
-  assert.deepEqual([byId.temperature.region, byId.activity.region], ["body", "body"]);
-});
-
-test("metric units and categorical mood scale are explicit", () => {
-  const metrics = Object.fromEntries(data.METRICS.map((metric) => [metric.id, metric]));
-  assert.equal(metrics.heartRate.unit, "bpm");
-  assert.equal(metrics.bloodPressure.unit, "mmHg");
-  assert.equal(metrics.temperature.unit, "°C");
-  assert.equal(metrics.sleep.unit, "h");
-  assert.equal(metrics.activity.unit, "min");
-  assert.equal(metrics.mood.unit, "/ 5");
+test("cumulative radiation stays nonnegative, monotonically increasing, and formatted as dose", () => {
   for (const profile of data.PROFILES) {
-    const moods = data.getSeries(profile.id, "mood", 30);
-    assert.ok(moods.every(({ value }) => Number.isInteger(value) && value >= 1 && value <= 5));
+    const readings = data.getSeries(profile.id, "radiation", 30).map(({ value }) => value);
+    assert.ok(readings.every((value) => value >= 0));
+    assert.ok(readings.every((value, index) => index === 0 || value >= readings[index - 1]));
+    assert.ok(readings.some((value, index) => index > 0 && value > readings[index - 1]));
+    assert.match(data.formatValue("radiation", readings.at(-1)), /^\d+\.\d{2}$/);
   }
+});
+
+test("categorical self-reports stay on their declared five-point scale", () => {
+  for (const profile of data.PROFILES) {
+    for (const metricId of ["mood", "stress"]) {
+      assert.ok(data.getSeries(profile.id, metricId, 30).every(({ value }) => Number.isInteger(value) && value >= 1 && value <= 5));
+    }
+  }
+});
+
+test("unknown metric identifiers fail rather than returning an empty history", () => {
+  assert.throws(() => data.getSeries("mira-chen", "unknown", 30), /Unknown metric/);
 });
