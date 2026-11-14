@@ -1,6 +1,7 @@
 /**
- * Fictional crew profiles, metrics, and deterministic histories.
- * Ported verbatim (values and logic) from the legacy static prototype `data.js`.
+ * Fictional UMBRAL crew profiles, metrics, and deterministic profile histories.
+ * Baselines are the day-1 simulated readings from data/processed/crew_daily.csv; SpO₂, activity,
+ * and stress are not part of the mission simulation and keep fictional profile-only values.
  * All names, values, dates, labels, and statuses are fictional fixtures.
  */
 import type {
@@ -14,9 +15,10 @@ import type {
   SeriesPoint,
 } from "./types";
 
-export const MISSION_END = "2042-06-18";
+export const MISSION_START = "2026-11-14";
+export const MISSION_END = "2029-06-12";
 export const ENVIRONMENT = "Microgravity";
-export const MISSION_DAY = 184;
+export const MISSION_DAY = 942;
 
 export const METRICS: readonly Metric[] = [
   { id: "heartRate", label: "Heart rate", unit: "bpm", region: "heart", type: "line", description: "Fictional daily resting-pulse reading.", demoReference: "Interface-only comparison against this profile's fictional preflight reading; no clinical range is asserted." },
@@ -28,16 +30,16 @@ export const METRICS: readonly Metric[] = [
   { id: "spo2", label: "SpO₂", unit: "%", region: "body", type: "line", description: "Simulated point reading; not a continuous sensor stream.", demoReference: "Fictional point-reading context; no clinical range is asserted." },
   { id: "glucose", label: "Glucose", unit: "mg/dL", region: "body", type: "line", description: "Simulated point reading; not a continuous sensor stream.", demoReference: "Fictional point-reading context; no clinical range is asserted." },
   { id: "stress", label: "Stress", unit: "/ 5", region: "brain", type: "category", description: "Self-reported stress on a five-point scale; not a brain measurement.", demoReference: "Self-reported fictional preflight context on this demo scale; not a clinical assessment." },
-  { id: "radiation", label: "Cumulative radiation", unit: "mGy", region: "body", type: "line", description: "Fictional cumulative mission dose; values are nondecreasing and are not a dose rate.", demoReference: "Mission exposure scenario only: cumulative mission dose, not a personal-physiology baseline or a universal safe limit." },
+  { id: "radiation", label: "Cumulative radiation", unit: "mSv", region: "body", type: "line", description: "Simulated cumulative mission dose; values are nondecreasing and are not a dose rate.", demoReference: "Mission exposure scenario only: cumulative mission dose, not a personal-physiology baseline or a universal safe limit." },
 ];
 
 const BONE_NOTE = "Spaceflight can affect bone health. Individual responses vary; this demo does not estimate bone density or loss.";
 
 export const PROFILES: readonly Profile[] = [
-  { id: "mira-chen", name: "Mira Chen", role: "Commander · Flight engineer", initials: "MC", color: "blue", health: "monitoring", activity: "active", age: 38, weightKg: 64, sex: "Female", boneNote: BONE_NOTE, base: { heartRate: 82, systolic: 118, diastolic: 76, temperature: 36.8, sleep: 7.2, mood: 4, activity: 48, spo2: 98, glucose: 94, stress: 2, radiation: 14.2 } },
-  { id: "elias-okafor", name: "Elias Okafor", role: "Mission specialist · Geologist", initials: "EO", color: "green", health: "stable", activity: "active", age: 42, weightKg: 79, sex: "Male", boneNote: BONE_NOTE, base: { heartRate: 67, systolic: 112, diastolic: 72, temperature: 36.6, sleep: 7.8, mood: 4, activity: 56, spo2: 97, glucose: 101, stress: 2, radiation: 12.6 } },
-  { id: "sofia-alvarez", name: "Sofia Alvarez", role: "Pilot · Robotics lead", initials: "SA", color: "orange", health: "simulated-alert", activity: "active", age: 35, weightKg: 58, sex: "Female", boneNote: BONE_NOTE, base: { heartRate: 104, systolic: 132, diastolic: 86, temperature: 37.2, sleep: 5.6, mood: 2, activity: 32, spo2: 96, glucose: 108, stress: 4, radiation: 16.8 } },
-  { id: "noah-williams", name: "Noah Williams", role: "Payload specialist · Biologist", initials: "NW", color: "slate", health: "stable", activity: "resting", age: 31, weightKg: 73, sex: "Male", boneNote: BONE_NOTE, base: { heartRate: 61, systolic: 108, diastolic: 68, temperature: 36.5, sleep: 8.3, mood: 5, activity: 8, spo2: 99, glucose: 89, stress: 1, radiation: 11.4 } },
+  { id: "ines", name: "Inés", role: "Commander · EVA lead", initials: "IN", color: "blue", health: "stable", activity: "active", age: 44, weightKg: 62, sex: "Female", boneNote: BONE_NOTE, base: { heartRate: 61, systolic: 122, diastolic: 68, temperature: 36.6, sleep: 6.4, mood: 4, activity: 45, spo2: 98, glucose: 72, stress: 2, radiation: 151.8 } },
+  { id: "kanji", name: "Kanji", role: "Flight engineer · Systems", initials: "KA", color: "green", health: "monitoring", activity: "active", age: 47, weightKg: 70, sex: "Male", boneNote: BONE_NOTE, base: { heartRate: 43, systolic: 114, diastolic: 72, temperature: 36.5, sleep: 5.5, mood: 4, activity: 40, spo2: 97, glucose: 77, stress: 2, radiation: 1.8 } },
+  { id: "malik", name: "Malik", role: "Mission specialist · Geologist", initials: "MA", color: "orange", health: "stable", activity: "resting", age: 39, weightKg: 81, sex: "Male", boneNote: BONE_NOTE, base: { heartRate: 60, systolic: 116, diastolic: 74, temperature: 36.7, sleep: 6.1, mood: 4, activity: 8, spo2: 98, glucose: 77, stress: 1, radiation: 1.8 } },
+  { id: "sofia", name: "Sofía", role: "Pilot · EVA specialist", initials: "SO", color: "slate", health: "simulated-alert", activity: "active", age: 36, weightKg: 58, sex: "Female", boneNote: BONE_NOTE, base: { heartRate: 67, systolic: 121, diastolic: 70, temperature: 36.8, sleep: 6.5, mood: 4, activity: 50, spo2: 98, glucose: 76, stress: 2, radiation: 1.8 } },
 ];
 
 export const STATUS_LABELS: Readonly<Record<ScenarioStatus, string>> = {
@@ -52,10 +54,10 @@ const ALL_REFERENCE: Record<MetricId, ScenarioStatus> = {
 
 // Authored fixture states, deliberately independent of any reading or medical threshold.
 export const SCENARIOS: Readonly<Record<string, Readonly<Record<MetricId, ScenarioStatus>>>> = {
-  "mira-chen": { ...ALL_REFERENCE, bloodPressure: "demo-deviation" },
-  "elias-okafor": { ...ALL_REFERENCE },
-  "sofia-alvarez": { ...ALL_REFERENCE, heartRate: "demo-alert" },
-  "noah-williams": { ...ALL_REFERENCE },
+  ines: { ...ALL_REFERENCE },
+  kanji: { ...ALL_REFERENCE, heartRate: "demo-deviation" },
+  malik: { ...ALL_REFERENCE },
+  sofia: { ...ALL_REFERENCE, bloodPressure: "demo-alert" },
 };
 
 const SHAPES = {

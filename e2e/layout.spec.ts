@@ -9,7 +9,7 @@ test.describe("responsive layout", () => {
       await page.goto("/");
       await expect(page.locator(".crew-card")).toHaveCount(4);
       await expectNoHorizontalOverflow(page);
-      await page.goto("/astronaut/sofia-alvarez");
+      await page.goto("/astronaut/sofia");
       await expect(page.locator(".metric-card")).toHaveCount(10);
       await expectNoHorizontalOverflow(page);
     });

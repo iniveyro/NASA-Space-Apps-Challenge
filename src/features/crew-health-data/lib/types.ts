@@ -77,3 +77,58 @@ export interface MetricScenario {
   reference: string;
   evidence: string;
 }
+
+/** UMBRAL mission phases, in mission order (see data/processed/mission_timeline.csv). */
+export type MissionPhase = "transit_out" | "mars_arrival" | "surface" | "mars_departure" | "transit_return" | "landed";
+
+/** Spacecraft–Earth link state for a mission day. */
+export type CommStatus = "link" | "blackout" | "unknown";
+
+export interface MissionDay {
+  day: number;
+  date: string;
+  phase: MissionPhase;
+  comm: CommStatus;
+}
+
+/** One crew member's simulated readings for one mission day. Missing or non-finite cells are null. */
+export interface CrewDayReading {
+  day: number;
+  date: string;
+  crewId: string;
+  heartRate: number | null;
+  systolic: number | null;
+  diastolic: number | null;
+  temperature: number | null;
+  sleep: number | null;
+  mood: number | null;
+  glucose: number | null;
+  /** Cumulative mission dose in mSv: nondecreasing, not a rate, not a safe limit. */
+  radiation: number | null;
+  event: string | null;
+}
+
+/** Authored scenario event from data/processed/crew_events.csv. */
+export interface CrewEvent {
+  day: number;
+  date: string;
+  crewId: string;
+  event: string;
+  detail: string;
+}
+
+export type CrewSeriesField = "heartRate" | "systolic" | "diastolic" | "temperature" | "sleep" | "mood" | "glucose" | "radiation";
+
+/** Compact, serializable per-crew series: index `day - 1` holds that mission day's value. */
+export type CrewSeries = Record<CrewSeriesField, (number | null)[]> & { event: (string | null)[] };
+
+export interface MissionDataset {
+  days: MissionDay[];
+  crew: Record<string, CrewSeries>;
+  events: CrewEvent[];
+}
+
+export interface DayScenario {
+  status: ScenarioStatus | "unknown";
+  label: string;
+}
