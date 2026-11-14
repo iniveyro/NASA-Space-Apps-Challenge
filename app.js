@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const { METRICS, PROFILES, getProfile, getSeries, latest, formatValue } = window.AstraData;
+  const { METRICS, PROFILES, ENVIRONMENT, getProfile, getSeries, latest, formatValue, resolveMetricScenario } = window.AstraData;
   const state = { profileId: PROFILES[0].id, metricId: "heartRate", days: 30, region: null, hoverRegion: null, focusRegion: null, lastTouchAt: 0 };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -8,6 +8,8 @@
   const metricFor = (id) => METRICS.find((metric) => metric.id === id);
   const stateClass = (status) => status === "monitoring" ? "monitoring" : status === "simulated-alert" ? "simulated-alert" : "stable";
   const healthLabel = (status) => ({ stable: "Stable", monitoring: "Monitoring", "simulated-alert": "Simulated alert" })[status];
+  const metricStatusMark = (status) => ({ "within-demo-reference": "✓", "demo-deviation": "!", "demo-alert": "!", unknown: "?" })[status] || "?";
+  const metricStatusClass = (status) => ["within-demo-reference", "demo-deviation", "demo-alert"].includes(status) ? status : "unknown";
   const regionMetrics = {
     heart: ["heartRate", "bloodPressure"],
     brain: ["sleep", "mood", "stress"],
@@ -27,19 +29,24 @@
   function selectedProfile() { return getProfile(state.profileId); }
   function renderCrew() {
     $("#crew-grid").innerHTML = PROFILES.map((person) => {
-      const bloodPressure = latest(person.id, "bloodPressure");
       const values = [
-        ["Heart rate", formatValue("heartRate", latest(person.id, "heartRate")), "bpm"],
-        ["Blood pressure", `${bloodPressure.systolic}/${bloodPressure.diastolic}`, "mmHg"],
-        ["Temperature", formatValue("temperature", latest(person.id, "temperature")), "°C"],
-        ["Cumulative radiation", formatValue("radiation", latest(person.id, "radiation")), "mGy"]
+        ["heartRate", latest(person.id, "heartRate")],
+        ["bloodPressure", latest(person.id, "bloodPressure")],
+        ["temperature", latest(person.id, "temperature")],
+        ["radiation", latest(person.id, "radiation")]
       ];
       const healthClass = stateClass(person.health);
       const activityClass = person.activity === "resting" ? "resting" : "active";
       return `<article class="crew-card">
-        <div class="crew-card-heading"><span class="avatar avatar-${escapeHtml(person.color)}" aria-hidden="true">${escapeHtml(person.initials)}</span><div class="crew-identity"><h3>${escapeHtml(person.name)}</h3><p>${escapeHtml(person.role)}</p></div></div>
+        <div class="crew-card-heading"><span class="avatar" aria-hidden="true">${escapeHtml(person.initials)}</span><div class="crew-identity"><h3>${escapeHtml(person.name)}</h3><p>${escapeHtml(person.role)}</p></div></div>
         <div class="crew-statuses"><span class="status-text ${healthClass}"><i class="state-dot" aria-hidden="true"></i>${escapeHtml(healthLabel(person.health))}</span><span class="status-text ${activityClass}"><i class="state-dot" aria-hidden="true"></i>${person.activity === "resting" ? "Resting" : "Active"}</span></div>
-        <dl class="crew-vitals">${values.map(([label, value, unit]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)} <span>${escapeHtml(unit)}</span></dd></div>`).join("")}</dl>
+        <dl class="crew-vitals">${values.map(([metricId, value]) => {
+          const metric = metricFor(metricId);
+          const formatted = formatValue(metricId, value);
+          const scenario = resolveMetricScenario(person.id, metricId, value);
+          const statusClass = metricStatusClass(scenario.status);
+          return `<div class="vital-tile ${statusClass}" aria-label="${escapeHtml(metric.label)}: ${escapeHtml(formatted)} ${escapeHtml(metric.unit)}. ${escapeHtml(scenario.label)}. Simulated demo reference only."><dt>${escapeHtml(metric.label)}</dt><dd>${escapeHtml(formatted)} <span>${escapeHtml(metric.unit)}</span></dd><span class="metric-status"><b aria-hidden="true">${metricStatusMark(scenario.status)}</b>${escapeHtml(scenario.label)}</span></div>`;
+        }).join("")}</dl>
         <a class="card-link" href="#astronaut/${escapeHtml(person.id)}" aria-label="Open ${escapeHtml(person.name)} profile">View profile <span aria-hidden="true">→</span></a>
       </article>`;
     }).join("");
@@ -47,7 +54,7 @@
 
   function renderProfile() {
     const person = selectedProfile();
-    $("#profile-avatar").className = `avatar avatar-${person.color}`;
+    $("#profile-avatar").className = "avatar";
     $("#profile-avatar").textContent = person.initials;
     $("#detail-title").textContent = person.name;
     $("#profile-role").textContent = person.role;
@@ -68,12 +75,25 @@
     $("#metric-grid").innerHTML = METRICS.map((metric) => {
       const value = latest(person.id, metric.id);
       const formatted = formatValue(metric.id, value);
+      const scenario = resolveMetricScenario(person.id, metric.id, value);
+      const statusClass = metricStatusClass(scenario.status);
       const display = metric.id === "mood" || metric.id === "stress" ? `${formatted} <span>of 5</span>` : `${formatted} <span>${escapeHtml(metric.unit)}</span>`;
       const note = metric.id === "spo2" || metric.id === "glucose" ? "Simulated point reading" : metric.id === "stress" || metric.id === "mood" ? "Self-reported" : metric.id === "radiation" ? "Cumulative dose" : "Latest simulated value";
-      return `<button class="metric-card" type="button" data-metric="${metric.id}" aria-pressed="${metric.id === state.metricId}" aria-label="${escapeHtml(metric.label)}: ${escapeHtml(formatted)} ${escapeHtml(metric.unit)}. ${escapeHtml(metric.description)} Select to view history.">
-        <span class="metric-label">${escapeHtml(metric.label)}</span><strong class="metric-value">${display}</strong><span class="metric-note">${escapeHtml(note)}</span>
+      return `<button class="metric-card ${statusClass}" type="button" data-metric="${metric.id}" aria-pressed="${metric.id === state.metricId}" aria-label="${escapeHtml(metric.label)}: ${escapeHtml(formatted)} ${escapeHtml(metric.unit)}. ${escapeHtml(scenario.label)}. ${escapeHtml(metric.description)} Select to view history.">
+        <span class="metric-label">${escapeHtml(metric.label)}</span><strong class="metric-value">${display}</strong><span class="metric-status"><b aria-hidden="true">${metricStatusMark(scenario.status)}</b>${escapeHtml(scenario.label)}</span><span class="metric-note">${escapeHtml(note)}</span>
       </button>`;
     }).join("");
+    renderReference(person, metricFor(state.metricId));
+  }
+
+  function renderReference(person, metric) {
+    const value = latest(person.id, metric.id);
+    const scenario = resolveMetricScenario(person.id, metric.id, value);
+    const statusClass = metricStatusClass(scenario.status);
+    const reading = formatValue(metric.id, value);
+    const baseline = scenario.baseline == null ? "Unavailable" : formatValue(metric.id, scenario.baseline);
+    $("#metric-reference").innerHTML = `<div><p class="eyebrow">SIMULATED REFERENCE · ${escapeHtml(ENVIRONMENT.toUpperCase())} CONTEXT</p><h3>${escapeHtml(metric.label)} · ${escapeHtml(scenario.label)}</h3></div><dl class="reference-values"><div><dt>Current fictional reading</dt><dd>${escapeHtml(reading)} ${escapeHtml(metric.unit)}</dd></div><div><dt>${escapeHtml(scenario.baselineLabel || "Fictional baseline")}</dt><dd>${escapeHtml(baseline)} ${escapeHtml(metric.unit)}</dd></div></dl><p class="reference-description">${escapeHtml(scenario.reference)}</p><p class="reference-caveat">${escapeHtml(scenario.evidence || "Status is unavailable because an authored demo reference or reading is missing.")} Environment is context only; no environment-specific medical ranges are validated. Earth, Moon, and Mars are supported as context labels only and do not change values or statuses.</p>`;
+    $("#metric-reference").className = `metric-reference ${statusClass}`;
   }
 
   function niceTicks(min, max, count) {
@@ -195,6 +215,8 @@
       window.scrollTo(0, 0); heading.focus({ preventScroll: true });
     }
   }
+
+  $("#environment-label").textContent = `ENVIRONMENT · ${ENVIRONMENT.toUpperCase()}`;
 
   function bindEvents() {
     window.addEventListener("hashchange", () => renderRoute(true));

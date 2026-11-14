@@ -18,7 +18,7 @@
         <span class="brand-mark" aria-hidden="true">A</span>
         <span><strong>ASTRA Health</strong><small>Mission wellness console</small></span>
       </a>
-      <div class="mission-context"><span class="local-indicator" aria-hidden="true"></span><span>LOCAL DEMO · NO LIVE TELEMETRY</span><span class="mission-day">MISSION DAY 184</span></div>
+      <div class="mission-context"><span class="local-indicator" aria-hidden="true"></span><span>LOCAL DEMO · NO LIVE TELEMETRY</span><span id="environment-label" class="mission-day environment-label">ENVIRONMENT · MICROGRAVITY</span><span class="mission-day">MISSION DAY 184</span></div>
     </header>
 
     <main id="main-content">
@@ -42,8 +42,9 @@
         <div class="profile-status-row"><div class="status-group"><span id="health-status" class="status-text"></span><span id="activity-status" class="status-text"></span></div><p id="profile-note" class="scenario-note"></p></div>
 
         <section aria-labelledby="readings-title" class="readings-section">
-          <div class="section-heading"><div><h2 id="readings-title">Latest readings</h2><p>Fictional point readings · 18 Jun 2042</p></div><span class="hint">Choose a reading to view its history</span></div>
+          <div class="section-heading"><div><h2 id="readings-title">Latest readings</h2><p>Fictional point readings · 18 Jun 2042</p></div><span class="hint">Colored states are authored demo scenarios, not medical assessments.</span></div>
           <div id="metric-grid" class="metric-grid"></div>
+          <article id="metric-reference" class="metric-reference" aria-live="polite" aria-label="Selected metric reference detail"></article>
         </section>
 
         <div class="detail-grid">

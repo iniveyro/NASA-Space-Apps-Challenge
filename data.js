@@ -7,16 +7,16 @@
 
   const MISSION_END = "2042-06-18";
   const METRICS = [
-    { id: "heartRate", label: "Heart rate", unit: "bpm", region: "heart", type: "line", description: "Fictional daily resting-pulse reading." },
-    { id: "bloodPressure", label: "Blood pressure", unit: "mmHg", region: "heart", type: "paired", description: "Fictional paired systolic and diastolic point readings." },
-    { id: "temperature", label: "Temperature", unit: "°C", region: "body", type: "line", description: "Fictional daily body-temperature reading." },
-    { id: "sleep", label: "Sleep", unit: "h", region: "brain", type: "bar", description: "Self-reported sleep duration; not a brain measurement." },
-    { id: "mood", label: "Mood", unit: "/ 5", region: "brain", type: "category", description: "Self-reported mood on a five-point scale." },
-    { id: "activity", label: "Activity", unit: "min", region: "body", type: "bar", description: "Fictional minutes of logged daily activity." },
-    { id: "spo2", label: "SpO₂", unit: "%", region: "body", type: "line", description: "Simulated point reading; not a continuous sensor stream." },
-    { id: "glucose", label: "Glucose", unit: "mg/dL", region: "body", type: "line", description: "Simulated point reading; not a continuous sensor stream." },
-    { id: "stress", label: "Stress", unit: "/ 5", region: "brain", type: "category", description: "Self-reported stress on a five-point scale; not a brain measurement." },
-    { id: "radiation", label: "Cumulative radiation", unit: "mGy", region: "body", type: "line", description: "Fictional cumulative mission dose; values are nondecreasing and are not a dose rate." }
+    { id: "heartRate", label: "Heart rate", unit: "bpm", region: "heart", type: "line", description: "Fictional daily resting-pulse reading.", demoReference: "Interface-only comparison against this profile's fictional preflight reading; no clinical range is asserted." },
+    { id: "bloodPressure", label: "Blood pressure", unit: "mmHg", region: "heart", type: "paired", description: "Fictional paired systolic and diastolic point readings.", demoReference: "Paired fictional preflight reading shown for context; no clinical range is asserted." },
+    { id: "temperature", label: "Temperature", unit: "°C", region: "body", type: "line", description: "Fictional daily body-temperature reading.", demoReference: "Fictional preflight value for an interface comparison only; not a validated medical range." },
+    { id: "sleep", label: "Sleep", unit: "h", region: "brain", type: "bar", description: "Self-reported sleep duration; not a brain measurement.", demoReference: "Self-reported fictional preflight context; this does not define a sleep-health range." },
+    { id: "mood", label: "Mood", unit: "/ 5", region: "brain", type: "category", description: "Self-reported mood on a five-point scale.", demoReference: "Self-reported fictional preflight context on this demo scale; not a clinical assessment." },
+    { id: "activity", label: "Activity", unit: "min", region: "body", type: "bar", description: "Fictional minutes of logged daily activity.", demoReference: "Fictional preflight activity context; no target or health threshold is implied." },
+    { id: "spo2", label: "SpO₂", unit: "%", region: "body", type: "line", description: "Simulated point reading; not a continuous sensor stream.", demoReference: "Fictional point-reading context; no clinical range is asserted." },
+    { id: "glucose", label: "Glucose", unit: "mg/dL", region: "body", type: "line", description: "Simulated point reading; not a continuous sensor stream.", demoReference: "Fictional point-reading context; no clinical range is asserted." },
+    { id: "stress", label: "Stress", unit: "/ 5", region: "brain", type: "category", description: "Self-reported stress on a five-point scale; not a brain measurement.", demoReference: "Self-reported fictional preflight context on this demo scale; not a clinical assessment." },
+    { id: "radiation", label: "Cumulative radiation", unit: "mGy", region: "body", type: "line", description: "Fictional cumulative mission dose; values are nondecreasing and are not a dose rate.", demoReference: "Mission exposure scenario only: cumulative mission dose, not a personal-physiology baseline or a universal safe limit." }
   ];
 
   const PROFILES = [
@@ -25,6 +25,20 @@
     { id: "sofia-alvarez", name: "Sofia Alvarez", role: "Pilot · Robotics lead", initials: "SA", color: "orange", health: "simulated-alert", activity: "active", age: 35, weightKg: 58, sex: "Female", boneNote: "Spaceflight can affect bone health. Individual responses vary; this demo does not estimate bone density or loss.", base: { heartRate: 104, systolic: 132, diastolic: 86, temperature: 37.2, sleep: 5.6, mood: 2, activity: 32, spo2: 96, glucose: 108, stress: 4, radiation: 16.8 } },
     { id: "noah-williams", name: "Noah Williams", role: "Payload specialist · Biologist", initials: "NW", color: "slate", health: "stable", activity: "resting", age: 31, weightKg: 73, sex: "Male", boneNote: "Spaceflight can affect bone health. Individual responses vary; this demo does not estimate bone density or loss.", base: { heartRate: 61, systolic: 108, diastolic: 68, temperature: 36.5, sleep: 8.3, mood: 5, activity: 8, spo2: 99, glucose: 89, stress: 1, radiation: 11.4 } }
   ];
+
+  const ENVIRONMENT = "Microgravity";
+  const STATUS_LABELS = {
+    "within-demo-reference": "Within demo reference",
+    "demo-deviation": "Demo deviation",
+    "demo-alert": "Demo alert"
+  };
+  // Authored fixture states, deliberately independent of any reading or medical threshold.
+  const SCENARIOS = {
+    "mira-chen": { heartRate: "within-demo-reference", bloodPressure: "demo-deviation", temperature: "within-demo-reference", sleep: "within-demo-reference", mood: "within-demo-reference", activity: "within-demo-reference", spo2: "within-demo-reference", glucose: "within-demo-reference", stress: "within-demo-reference", radiation: "within-demo-reference" },
+    "elias-okafor": { heartRate: "within-demo-reference", bloodPressure: "within-demo-reference", temperature: "within-demo-reference", sleep: "within-demo-reference", mood: "within-demo-reference", activity: "within-demo-reference", spo2: "within-demo-reference", glucose: "within-demo-reference", stress: "within-demo-reference", radiation: "within-demo-reference" },
+    "sofia-alvarez": { heartRate: "demo-alert", bloodPressure: "within-demo-reference", temperature: "within-demo-reference", sleep: "within-demo-reference", mood: "within-demo-reference", activity: "within-demo-reference", spo2: "within-demo-reference", glucose: "within-demo-reference", stress: "within-demo-reference", radiation: "within-demo-reference" },
+    "noah-williams": { heartRate: "within-demo-reference", bloodPressure: "within-demo-reference", temperature: "within-demo-reference", sleep: "within-demo-reference", mood: "within-demo-reference", activity: "within-demo-reference", spo2: "within-demo-reference", glucose: "within-demo-reference", stress: "within-demo-reference", radiation: "within-demo-reference" }
+  };
 
   const SHAPES = {
     heartRate: [2, 1, 0, -1, 1, 3, 1, -2, -1, 0, 2, 1, -1, 0, 2, 1, -2, -1, 1, 2, 0, -1, 1, 3, 1, -2, 0, 1, -1, 0],
@@ -72,12 +86,51 @@
     });
   }
   function latest(profileId, metricId) { return getSeries(profileId, metricId, 30).at(-1).value; }
+  function finiteNumber(value) { return typeof value === "number" && Number.isFinite(value); }
+  function completeReading(metricId, value) {
+    if (metricId === "bloodPressure") {
+      return Boolean(value && typeof value === "object" && !Array.isArray(value) && finiteNumber(value.systolic) && finiteNumber(value.diastolic));
+    }
+    return finiteNumber(value);
+  }
+  function baselineFor(person, metricId) {
+    return metricId === "bloodPressure"
+      ? { systolic: person.base.systolic, diastolic: person.base.diastolic }
+      : person.base[metricId];
+  }
   function formatValue(metricId, value) {
+    if (!completeReading(metricId, value)) return "Unknown";
     if (metricId === "bloodPressure") return value.systolic + "/" + value.diastolic;
     if (metricId === "temperature") return Number(value).toFixed(1);
     if (metricId === "sleep") return Number(value).toFixed(1);
     if (metricId === "radiation") return Number(value).toFixed(2);
     return String(value);
   }
-  return { MISSION_END, METRICS, PROFILES, getProfile: profile, getSeries, latest, formatValue };
+  function resolveMetricScenario(profileId, metricId, reading) {
+    const person = PROFILES.find((item) => item.id === profileId);
+    const metric = METRICS.find((item) => item.id === metricId);
+    const status = SCENARIOS[profileId] && SCENARIOS[profileId][metricId];
+    const baselineValue = person && person.base && baselineFor(person, metricId);
+    const unavailable = {
+      status: "unknown",
+      label: "Unknown",
+      baseline: null,
+      baselineLabel: "Demo reference unavailable",
+      reference: "No complete finite fictional reading and reference are available for this metric.",
+      evidence: "No demo status is assigned when required reading or baseline data is missing or invalid."
+    };
+    if (!person || !metric || !STATUS_LABELS[status] || !metric.demoReference ||
+      !completeReading(metricId, reading) || !completeReading(metricId, baselineValue)) {
+      return unavailable;
+    }
+    return {
+      status,
+      label: STATUS_LABELS[status],
+      baseline: baselineValue,
+      baselineLabel: metricId === "radiation" ? "Mission-start dose (fixture context)" : "Fictional preflight value",
+      reference: metric.demoReference,
+      evidence: "Authored demo scenario; status is not calculated from the reading."
+    };
+  }
+  return { MISSION_END, ENVIRONMENT, METRICS, PROFILES, getProfile: profile, getSeries, latest, formatValue, resolveMetricScenario };
 });

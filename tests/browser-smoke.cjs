@@ -70,9 +70,15 @@ async function main() {
   await cdp.send("Page.navigate", { url: `http://127.0.0.1:${httpPort}/#crew` });
   await until(() => evaluate("document.readyState === 'complete' && document.querySelectorAll('.crew-card').length === 4"), "crew overview");
   await evaluate("window.__smokeErrors=[]; window.addEventListener('error', event => window.__smokeErrors.push(event.message))");
-  const initial = await evaluate("({hash:location.hash, count:document.querySelectorAll('.crew-card').length, visible:!document.querySelector('#crew-view').hidden, detailHidden:document.querySelector('#detail-view').hidden, cards:[...document.querySelectorAll('.crew-card')].map(card=>({name:card.querySelector('h3').textContent, metrics:card.querySelectorAll('.crew-vitals dt').length, values:card.querySelectorAll('.crew-vitals dd').length, text:card.innerText})), font:getComputedStyle(document.body).fontFamily})");
+  const initial = await evaluate("({hash:location.hash, count:document.querySelectorAll('.crew-card').length, visible:!document.querySelector('#crew-view').hidden, detailHidden:document.querySelector('#detail-view').hidden, cards:[...document.querySelectorAll('.crew-card')].map(card=>({name:card.querySelector('h3').textContent, metrics:card.querySelectorAll('.crew-vitals dt').length, values:card.querySelectorAll('.crew-vitals dd').length, text:card.innerText, surface:getComputedStyle(card).backgroundColor, avatar:getComputedStyle(card.querySelector('.avatar')).backgroundColor, tiles:[...card.querySelectorAll('.vital-tile')].map(tile=>({className:tile.className, color:getComputedStyle(tile).backgroundColor, height:tile.getBoundingClientRect().height, text:tile.innerText}))})), environment:document.querySelector('#environment-label').textContent,font:getComputedStyle(document.body).fontFamily})");
   if (initial.hash !== "#crew" || initial.count !== 4 || initial.cards.some((card) => card.metrics !== 4 || card.values !== 4) || !initial.cards.every((card) => card.text.includes("Cumulative radiation"))) throw new Error(`Crew overview mismatch: ${JSON.stringify(initial)}`);
-  fs.writeFileSync(path.join(artifactDir, "redesign-overview.png"), Buffer.from((await cdp.send("Page.captureScreenshot", { format: "png" })).data, "base64"));
+  const green = "rgb(22, 101, 52)"; const amber = "rgb(133, 77, 14)"; const red = "rgb(153, 27, 27)";
+  const crewTiles = initial.cards.flatMap((card) => card.tiles);
+  if (initial.cards.some((card) => card.surface !== "rgb(23, 33, 47)" || card.avatar !== initial.cards[0].avatar) || initial.environment !== "ENVIRONMENT · MICROGRAVITY") throw new Error(`Dark neutral cards or environment context missing: ${JSON.stringify(initial)}`);
+  if (crewTiles.some((tile) => ![green, amber, red].includes(tile.color) || tile.height < 100 || !tile.text.includes("demo reference") && !tile.text.includes("Demo deviation") && !tile.text.includes("Demo alert"))) throw new Error(`Overview metrics are not substantial colored status surfaces: ${JSON.stringify(crewTiles)}`);
+  if (!crewTiles.some((tile) => tile.color === red && tile.text.includes("Demo alert")) || !crewTiles.some((tile) => tile.color === amber && tile.text.includes("Demo deviation")) || crewTiles.filter((tile) => tile.color === green).length < 14) throw new Error(`Expected mostly green with prominent amber/red exceptions: ${JSON.stringify(crewTiles)}`);
+  if (initial.cards[3].text.includes("Resting") && !initial.cards[3].tiles.every((tile) => tile.color === green)) throw new Error("Resting activity must remain independent of metric scenario colors.");
+  fs.writeFileSync(path.join(artifactDir, "colors-overview.png"), Buffer.from((await cdp.send("Page.captureScreenshot", { format: "png" })).data, "base64"));
 
   const routeProfiles = [
     ["mira-chen", "Mira Chen", "38 years", "64 kg", "Female"],
@@ -84,8 +90,12 @@ async function main() {
     await cdp.send("Page.navigate", { url: `http://127.0.0.1:${httpPort}/#astronaut/${id}` });
     const profile = await until(() => evaluate(`(() => { const value={name:document.querySelector('#detail-title')?.textContent, visible:!document.querySelector('#detail-view').hidden, hash:location.hash, age:document.querySelector('#profile-age').textContent, weight:document.querySelector('#profile-weight').textContent, sex:document.querySelector('#profile-sex').textContent, metrics:document.querySelectorAll('.metric-card').length}; return value.name === ${JSON.stringify(name)} && value.visible && value.hash === ${JSON.stringify(`#astronaut/${id}`)} && value.metrics === 10 ? value : null; })()`), `profile ${id}`);
     if (!profile || profile.age !== age || profile.weight !== weight || profile.sex !== sex) throw new Error(`Profile/deep link mismatch: ${id}: ${JSON.stringify(profile)}`);
-    const consistency = await evaluate(`({cards:[...document.querySelectorAll('.metric-card')].map(card=>({id:card.dataset.metric, text:card.querySelector('.metric-value').innerText.trim()})), latest:Object.fromEntries(AstraData.METRICS.map(metric=>[metric.id,AstraData.formatValue(metric.id,AstraData.latest('${id}',metric.id))]))})`);
+    const consistency = await evaluate(`({cards:[...document.querySelectorAll('.metric-card')].map(card=>({id:card.dataset.metric, text:card.querySelector('.metric-value').innerText.trim(),status:card.querySelector('.metric-status').innerText,color:getComputedStyle(card).backgroundColor,height:card.getBoundingClientRect().height})), latest:Object.fromEntries(AstraData.METRICS.map(metric=>[metric.id,AstraData.formatValue(metric.id,AstraData.latest('${id}',metric.id))])), reference:document.querySelector('#metric-reference').innerText, environment:document.querySelector('#environment-label').textContent, activity:document.querySelector('#activity-status').innerText})`);
     if (consistency.cards.some((card) => !consistency.latest[card.id] || !card.text.startsWith(consistency.latest[card.id]))) throw new Error(`Latest card values disagree with data for ${id}: ${JSON.stringify(consistency)}`);
+    if (consistency.cards.some((card) => ![green, amber, red].includes(card.color) || card.height < 100 || !card.status)) throw new Error(`Detail metric card lacks visible semantic surface/status: ${JSON.stringify(consistency)}`);
+    if (id === "sofia-alvarez" && (consistency.cards.find((card) => card.id === "heartRate").color !== red || !consistency.reference.includes("Demo alert") || !consistency.reference.includes("Fictional preflight value"))) throw new Error(`Sofia's authored heart-rate scenario/reference is not surfaced: ${JSON.stringify(consistency)}`);
+    if (id === "noah-williams" && (!consistency.activity.includes("Resting") || consistency.cards.some((card) => card.color !== green))) throw new Error(`Resting status must not color or mask Noah's independent metric scenarios: ${JSON.stringify(consistency)}`);
+    if (consistency.environment !== "ENVIRONMENT · MICROGRAVITY" || !consistency.reference.includes("no environment-specific medical ranges are validated") || !consistency.reference.includes("do not change values or statuses")) throw new Error("Environment context must not imply validated or changing ranges.");
   }
 
   await cdp.send("Page.navigate", { url: `http://127.0.0.1:${httpPort}/#astronaut/mira-chen` });
@@ -135,6 +145,8 @@ async function main() {
   await evaluate(`document.querySelector('[data-region="brain"]').click()`);
   const selectedBrain = await evaluate(`({text:document.querySelector('#body-callout-text').textContent, pressed:document.querySelector('[data-region="brain"]').getAttribute('aria-pressed'), metric:document.querySelector('#chart-metric-title').textContent})`);
   if (!selectedBrain.text.includes("Self-reported") || selectedBrain.pressed !== "true" || selectedBrain.metric !== "Sleep") throw new Error(`Body map click did not select related signals: ${JSON.stringify(selectedBrain)}`);
+  await evaluate(`(() => { const target=document.querySelector('[data-region="heart"]'); const top=target.getBoundingClientRect().top+window.scrollY; window.scrollTo({top:Math.max(0,top-300),behavior:'instant'}); })()`);
+  await pause(100);
   const heartRect = await evaluate(`(() => { const r=document.querySelector('[data-region="heart"]').getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
   await cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: heartRect.x, y: heartRect.y });
   const hovered = await evaluate(`({text:document.querySelector('#body-callout-text').textContent, brain:document.querySelector('[data-region="brain"]').getAttribute('aria-pressed'), preview:document.querySelector('[data-region="heart"]').classList.contains('preview')})`);
@@ -147,7 +159,7 @@ async function main() {
 
   await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   await evaluate("window.scrollTo(0,0)");
-  fs.writeFileSync(path.join(artifactDir, "redesign-detail.png"), Buffer.from((await cdp.send("Page.captureScreenshot", { format: "png" })).data, "base64"));
+  fs.writeFileSync(path.join(artifactDir, "colors-detail.png"), Buffer.from((await cdp.send("Page.captureScreenshot", { format: "png" })).data, "base64"));
   const overflows = [];
   for (const width of [1440, 390, 320]) {
     await cdp.send("Emulation.setDeviceMetricsOverride", { width, height: width === 1440 ? 1000 : 900, deviceScaleFactor: 1, mobile: width < 760 });
@@ -170,12 +182,12 @@ async function main() {
   const touchTooltip = await evaluate("({hidden:document.querySelector('#chart-tooltip').hidden,text:document.querySelector('#chart-tooltip').textContent,overflow:document.documentElement.scrollWidth-window.innerWidth})");
   if (touchTooltip.hidden || !touchTooltip.text.includes(touchPoint.date) || !touchTooltip.text.includes("Systolic:") || !touchTooltip.text.includes("Diastolic:") || touchTooltip.overflow > 0) throw new Error(`Plot-wide touch did not show the nearest paired BP value: ${JSON.stringify({ touchPoint, touchTooltip })}`);
   await evaluate("window.scrollTo(0,0)");
-  fs.writeFileSync(path.join(artifactDir, "redesign-mobile.png"), Buffer.from((await cdp.send("Page.captureScreenshot", { format: "png" })).data, "base64"));
+  fs.writeFileSync(path.join(artifactDir, "colors-mobile.png"), Buffer.from((await cdp.send("Page.captureScreenshot", { format: "png" })).data, "base64"));
 
   const runtimeErrors = cdp.events.filter((event) => event.method === "Runtime.exceptionThrown" || (event.method === "Log.entryAdded" && event.params.entry.level === "error"));
   const pageErrors = await evaluate("window.__smokeErrors || []");
   if (runtimeErrors.length || pageErrors.length) throw new Error(`Browser errors: ${JSON.stringify({ runtimeErrors, pageErrors })}`);
-  console.log(JSON.stringify({ status: "PASS", chrome: debug.Browser, overview: { count: initial.count, metricsPerCard: 4 }, profiles: routeProfiles.map((entry) => entry[1]), routing: ["valid deep links", "reload via direct URL", "invalid route fallback", "card navigation", "back", "forward"], metrics, periods: { seven, thirty }, bodyMap: { selectedBrain, hovered, focusPreview }, overflow: overflows, reducedMotion, offMarkTouch: { targetDate: touchPoint.date, tooltip: touchTooltip.text }, screenshots: [".artifacts/redesign-overview.png", ".artifacts/redesign-detail.png", ".artifacts/redesign-mobile.png"], browserErrors: [] }, null, 2));
+  console.log(JSON.stringify({ status: "PASS", chrome: debug.Browser, overview: { count: initial.count, metricsPerCard: 4, darkNeutralCard: true, coloredMetricSurfaces: crewTiles.length, mostlyGreen: true, explicitRedAlert: true, independentRestStatus: true }, profiles: routeProfiles.map((entry) => entry[1]), routing: ["valid deep links", "reload via direct URL", "invalid route fallback", "card navigation", "back", "forward"], metrics, periods: { seven, thirty }, bodyMap: { selectedBrain, hovered, focusPreview }, overflow: overflows, reducedMotion, offMarkTouch: { targetDate: touchPoint.date, tooltip: touchTooltip.text }, screenshots: [".artifacts/colors-overview.png", ".artifacts/colors-detail.png", ".artifacts/colors-mobile.png"], browserErrors: [] }, null, 2));
 }
 
 main().catch((error) => { console.error(error.stack || error); process.exitCode = 1; }).finally(async () => {
