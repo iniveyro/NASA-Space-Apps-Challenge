@@ -4,4 +4,4 @@ NASA Space Apps Challenge 2026 · AstroHealth: astronaut health self-monitoring,
 
 ## Mission data
 
-Data, scripts and documentation for the demo are in `data/`, `scripts/` and `docs/`. See [docs/DATA.md](docs/DATA.md) for the file list, sources, assumptions and how to rebuild.
+Data and scripts for the demo are in `data/` and `scripts/`. See [data/README.md](data/README.md) for the file list, sources, assumptions and how to rebuild.

@@ -7,6 +7,7 @@ The demo is fully simulated and uses no hardware. Mission geometry comes from pl
 ## Structure
 
 ```
+data/README.md     This file
 data/raw/          Original NASA files, unmodified
   osdr/            Inspiration4 clinical panels (NASA OSDR OSD-569, OSD-575)
   horizons/        Mars seen from Earth, daily 2026-11-14..2029-06-12 (JPL Horizons)
@@ -16,7 +17,6 @@ data/processed/    Team-generated, used by the app
   crew_daily.csv               4 crew x 942 days: HR, BP, temperature, sleep, HRV, glucose, mood, dose
   crew_events.csv              Scenario events (day 120, 211, 493)
 scripts/           Python that rebuilds everything from data/raw
-docs/              DATA.md (this file), technical note (EN/ES), team data manual, methodology, plot, figures
 ```
 
 ## Rebuild
@@ -62,6 +62,6 @@ During the surface phase (days 211 to 732):
 - NASA ASCEND 2022 (McBrayer, Chai, Judd)
 - astropy
 
-The full list of 29 references is in `docs/UMBRAL-Technical-Note.docx`. Images in `docs/` are from the NASA Image and Video Library and are credited individually.
+The full list of 29 references is in the team's technical note (submitted separately).
 
 Crew members and the mission are fictional. AstroHealth flags deviations; it does not diagnose.
