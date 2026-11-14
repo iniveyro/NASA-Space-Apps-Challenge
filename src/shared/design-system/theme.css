@@ -1,0 +1,214 @@
+/*
+ * ASTRA Health design tokens — the single source of truth for color, radius,
+ * typography, and shadows. Tailwind v4 turns every token below into utilities
+ * (e.g. --color-status-ok-surface -> bg-status-ok-surface, --radius-card -> rounded-card).
+ *
+ * The default Tailwind palette is disabled on purpose (`--color-*: initial`):
+ * only project tokens can be used, so every feature shares one visual language.
+ * To add a token, open a dedicated `feat/design-system-<name>` PR (see AGENTS.md).
+ *
+ * `static` emits every token as a CSS variable on :root, so client code that
+ * cannot use classes (SVG libraries, canvas) reads them via `readToken()`.
+ */
+@theme static {
+  --color-*: initial;
+  --shadow-*: initial;
+
+  /* Base canvas and surfaces */
+  --color-canvas: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eef1f5;
+  --color-surface-subtle: #f8fafc;
+  --color-border: #dce2e8;
+  --color-border-strong: #c8d3df;
+  --color-divider: #edf0f4;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Text */
+  --color-text: #1a202c;
+  --color-text-strong: #1e293b;
+  --color-text-secondary: #334155;
+  --color-text-subtle: #475569;
+  --color-muted: #64748b;
+
+  /* Interactive / brand */
+  --color-primary: #2563eb;
+  --color-primary-strong: #1d4ed8;
+  --color-primary-deep: #1e40af;
+  --color-primary-soft: #f3f7fc;
+  --color-selected: #e8edf2;
+  --color-selected-border: #516b83;
+  --color-hover-border: #6b8cb5;
+
+  /* Dark "console" surfaces (crew cards) */
+  --color-console: #17212f;
+  --color-console-hover: #1c2939;
+  --color-console-raised: #202d3f;
+  --color-console-border: #2d4058;
+  --color-console-divider: #344256;
+  --color-console-tile-border: #43536a;
+  --color-console-ring: #52647a;
+  --color-console-avatar-border: #8da1bc;
+  --color-console-text: #f8fafc;
+  --color-console-text-soft: #e2e8f0;
+  --color-console-muted: #c0cbd8;
+  --color-console-faint: #d4dde8;
+  --color-console-trace: #b9c8d8;
+  --color-console-progress: #aac1d9;
+
+  /* Semantic demo states: surface (filled), border (on dark), soft (light bg), ink (text on soft) */
+  --color-status-ok: #16a34a;
+  --color-status-ok-surface: #166534;
+  --color-status-ok-border: #23a455;
+  --color-status-ok-soft: #e8f4eb;
+  --color-status-ok-ink: #173b24;
+
+  --color-status-warn: #d97706;
+  --color-status-warn-surface: #854d0e;
+  --color-status-warn-border: #e6a11b;
+  --color-status-warn-soft: #fff3dc;
+  --color-status-warn-ink: #4a2a07;
+  --color-status-warn-on-dark: #f2c879;
+
+  --color-status-alert: #dc2626;
+  --color-status-alert-surface: #991b1b;
+  --color-status-alert-border: #ed4a4a;
+  --color-status-alert-soft: #fde9e9;
+  --color-status-alert-ink: #4c1111;
+  --color-status-alert-on-dark: #f0a1a1;
+
+  --color-status-unknown: #94a3b8;
+  --color-status-unknown-surface: #475569;
+  --color-status-unknown-border: #94a3b8;
+  --color-status-unknown-soft: #eef1f5;
+  --color-status-unknown-ink: #334155;
+
+  --color-status-info: #2563eb;
+
+  /* Charts */
+  --color-chart-primary: #2563eb;
+  --color-chart-secondary: #64748b;
+  --color-chart-grid: #e7ebf0;
+  --color-chart-bar: #7c9cc2;
+  --color-chart-axis: #64748b;
+  --color-body-base: #dce2e8;
+  --color-body-highlight: #8da4ba;
+
+  /* Radius */
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  /* Typography — the default Tailwind type scale is replaced by this one */
+  --font-*: initial;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --text-*: initial;
+  --text-3xs: 8px;
+  --text-2xs: 9px;
+  --text-micro: 10px;
+  --text-xs: 11px;
+  --text-caption: 12px;
+  --text-sm: 13px;
+  --text-body: 14px;
+  --text-base: 15px;
+  --text-md: 16px;
+  --text-lg: 17px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 22px;
+  --text-display-sm: 28px;
+  --text-display: clamp(28px, 3vw, 38px);
+  --text-eyebrow: 11px;
+  --text-eyebrow--font-weight: 700;
+  --text-eyebrow--letter-spacing: 0.105em;
+  --text-vital: clamp(20px, 1.6vw, 23px);
+
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-strong: 650;
+  --font-weight-bold: 700;
+  --font-weight-heavy: 750;
+
+  --tracking-*: initial;
+  --tracking-display: -0.035em;
+  --tracking-tight: -0.025em;
+  --tracking-snug: -0.02em;
+  --tracking-normal: 0;
+  --tracking-caps: 0.045em;
+  --tracking-caps-wide: 0.075em;
+  --tracking-eyebrow: 0.105em;
+
+  /* Elevation */
+  --shadow-card: 0 2px 8px rgb(15 23 42 / 12%);
+  --shadow-popover: 0 2px 8px rgb(15 23 42 / 9%);
+  --shadow-toggle: 0 1px 2px rgb(15 23 42 / 12%);
+  --shadow-inset-avatar: inset 0 2px 6px rgb(0 0 0 / 35%);
+  --shadow-selected: 0 0 0 2px #1e293b, inset 0 0 0 1px #ffffff;
+
+  /* Breakpoints (mirror the legacy prototype) */
+  --breakpoint-xs: 431px;
+  --breakpoint-sm: 761px;
+  --breakpoint-md: 1051px;
+  --breakpoint-lg: 1200px;
+  --breakpoint-xl: 1360px;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    min-width: 320px;
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+    background: var(--color-canvas);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.5;
+  }
+  button {
+    font: inherit;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+  h1 {
+    font-size: var(--text-display);
+    line-height: 1.16;
+    letter-spacing: var(--tracking-display);
+    font-weight: var(--font-weight-bold);
+  }
+  h2 {
+    font-size: var(--text-2xl);
+    line-height: 1.3;
+    letter-spacing: var(--tracking-snug);
+    font-weight: var(--font-weight-bold);
+  }
+  h3 {
+    font-size: var(--text-lg);
+    line-height: 1.35;
+    font-weight: var(--font-weight-bold);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+}

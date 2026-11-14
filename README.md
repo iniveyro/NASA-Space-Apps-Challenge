@@ -8,19 +8,54 @@ Data and scripts for the demo are in `data/` and `scripts/`. See [data/README.md
 
 ## ASTRA Health
 
-ASTRA Health is a local, fictional astronaut wellness dashboard with a crew overview and individual profiles. It is an interface prototype, not telemetry or medical guidance.
+ASTRA Health is a fictional astronaut wellness dashboard with a crew overview and individual profiles. It is an interface prototype, not telemetry or medical guidance.
+
+Built with Next.js 16 (App Router), React 19, TypeScript, and Tailwind CSS v4. Deployed on Vercel.
 
 ### Quick start
 
-1. Open `index.html` in a current browser. No package manager, build step, or network request is required; the body-map library is included locally.
-2. Select a crew card to open `#astronaut/<id>`, or use **Back to crew overview**. Hash routes retain browser back/forward behavior.
-3. Select a metric, body-map group, or 7/30-day range to explore deterministic fictional history.
-
-For a local HTTP preview, run:
+Requires Node.js 22.12+ (24 recommended) and npm.
 
 ```sh
-python -m http.server 4173 --bind 127.0.0.1
+npm ci          # install the locked dependencies
+npm run dev     # http://localhost:3000
 ```
+
+Routes:
+
+- `/` — crew overview. Each card links to its profile.
+- `/astronaut/<id>` — profile (`mira-chen`, `elias-okafor`, `sofia-alvarez`, `noah-williams`). The four profiles are prerendered at build time; unknown ids show a not-found page.
+
+### Scripts
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build / serve |
+| `npm run lint` | ESLint, including architecture-boundary and design-token rules |
+| `npm run typecheck` | Route type generation + `tsc --noEmit` |
+| `npm test` | Vitest unit tests (data invariants, chart geometry, body-map regions) |
+| `npm run test:e2e` | Playwright end-to-end tests. Builds and starts the app; locally it uses installed Google Chrome. Set `PW_BUNDLED_CHROMIUM=1` to use Playwright's Chromium (`npx playwright install chromium`). |
+
+### Project structure
+
+```
+src/
+  app/                      thin routes only (layout, pages, not-found)
+  features/
+    crew-health-data/       fictional profiles, metrics, deterministic histories, labels
+    crew-overview/          crew cards, heart-rate sparkline, SpO₂ ring
+    astronaut-profile/      profile header, metric grid, reference detail, dashboard state
+    trend-chart/            SVG history chart and "Wellness trends" panel
+    body-map/               body-highlighter illustration and region selectors
+  shared/
+    design-system/          theme.css tokens, status tones, UI primitives
+    lib/                    cn(), date formatting
+e2e/                        Playwright specs, one per feature
+docs/design-system.md       tokens, primitives, do/don't
+```
+
+Features are independent folders with a public `index.ts`. Coding agents work one feature per branch; see [AGENTS.md](AGENTS.md) for the full contribution contract and [docs/design-system.md](docs/design-system.md) for the shared visual language.
 
 ### Prototype boundaries
 
@@ -33,30 +68,14 @@ python -m http.server 4173 --bind 127.0.0.1
 
 All names, values, dates, labels, and statuses are fictional fixtures. The interface contains one concise simulated-data notice.
 
-### Vendored body map
+### Body map library
 
-The browser loads `vendor/body-highlighter-3.0.2/body-highlighter.browser.js` as a local classic script so direct `file://` and local HTTP launch paths remain available. It is adapted from the standalone CommonJS distribution of [`body-highlighter` 3.0.2](https://www.npmjs.com/package/body-highlighter) (source: [GitHub](https://github.com/GV79/body-highlighter)); the upstream MIT license is included beside it. The adapter supplies a local `module`/`exports` wrapper and exposes only the needed API. No package scripts or runtime network requests are used. The upstream CJS source SHA-256 is `fff86f7b4d9c2753256499f55a4d7f5ba320260a03998651e3a81298c5d184ff`.
+The illustration uses [`body-highlighter`](https://www.npmjs.com/package/body-highlighter) 3.0.2 (MIT), installed from npm with an exact version pin and loaded on the client only. Its published CommonJS build matches the SHA-256 recorded for the earlier vendored copy (`fff86f7b4d9c2753256499f55a4d7f5ba320260a03998651e3a81298c5d184ff`).
 
-### Verification
+### Deploying to Vercel
 
-```sh
-node --check app.js
-node --check data.js
-node --test tests/*.test.cjs
-node --check tests/browser-smoke.cjs
-node tests/browser-smoke.cjs
-```
+1. Import the GitHub repository in the Vercel dashboard. The Next.js preset is detected automatically; no `vercel.json` is needed.
+2. Keep the defaults: install `npm ci` (from `package-lock.json`), build `npm run build`, root directory `/`.
+3. Every pull request gets a preview deployment; `main` deploys to production.
 
-The browser smoke test uses local Python and Chrome at `C:/Program Files/Google/Chrome/Application/chrome.exe`; it does not install packages or access remote services. It checks `file://` and HTTP routes/history, profile and metric consistency, body-map clicks and keyboard controls, charts, nearest-date touch selection, reduced motion, responsive overview/detail layouts, and horizontal overflow from 320–3840px. Screenshots are written to ignored `.artifacts/` files.
-
-### Files
-
-| File | Purpose |
-| --- | --- |
-| `index.html` | Accessible two-view structure and local body-map script |
-| `styles.css` | Responsive interface, focus states, and reduced-motion behavior |
-| `data.js` | Fictional profiles, metrics, and deterministic histories |
-| `app.js` | Hash routing, view rendering, map interaction, and SVG charts |
-| `tests/data.test.cjs` | Built-in Node tests for data invariants |
-| `tests/browser-smoke.cjs` | Local Chrome/CDP regression checks |
-| `vendor/body-highlighter-3.0.2/` | Pinned distribution, browser adapter, MIT license, and provenance |
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests, build, and Playwright on every pull request.
