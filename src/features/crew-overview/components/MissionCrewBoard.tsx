@@ -45,7 +45,15 @@ export function MissionCrewBoard({ data }: { data: MissionDataset }) {
               person={person}
               day={day}
               reading={reading}
-              heartRateTrend={seriesWindow(data, person.id, "heartRate", day, 7)}
+              trends={{
+                heartRate: [{ label: "heart rate", values: seriesWindow(data, person.id, "heartRate", day, 7) }],
+                bloodPressure: [
+                  { label: "systolic", values: seriesWindow(data, person.id, "systolic", day, 7) },
+                  { label: "diastolic", values: seriesWindow(data, person.id, "diastolic", day, 7) },
+                ],
+                temperature: [{ label: "temperature", values: seriesWindow(data, person.id, "temperature", day, 7) }],
+                radiation: [{ label: "cumulative dose", values: seriesWindow(data, person.id, "radiation", day, 7) }],
+              }}
               events={cardEvents(data, person.id, day, reading?.event ?? null)}
             />
           );
