@@ -15,13 +15,18 @@ test.describe("responsive layout", () => {
     });
   }
 
-  test("uses design tokens for the canvas and dark crew cards", async ({ page }) => {
+  test("uses design tokens for the canvas and light gray crew cards", async ({ page }) => {
     await page.goto("/");
     const colors = await page.evaluate(() => ({
       body: getComputedStyle(document.body).backgroundColor,
       card: getComputedStyle(document.querySelector(".crew-card")!).backgroundColor,
+      cardLink: getComputedStyle(document.querySelector(".crew-card-action")!).backgroundColor,
     }));
-    expect(colors).toEqual({ body: "rgb(245, 247, 250)", card: "rgb(23, 33, 47)" });
+    expect(colors).toEqual({
+      body: "rgb(245, 247, 250)",
+      card: "rgb(238, 241, 245)",
+      cardLink: "rgb(238, 241, 245)",
+    });
   });
 
   test("honors reduced motion", async ({ page }) => {

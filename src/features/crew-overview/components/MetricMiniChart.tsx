@@ -3,8 +3,6 @@ import type { MetricId } from "@/features/crew-health-data";
 
 export type { MiniChartSeries } from "../lib/mini-chart";
 
-const STROKES = ["stroke-chart-primary", "stroke-chart-secondary"];
-
 interface MetricMiniChartProps {
   day: number;
   metricLabel: string;
@@ -48,10 +46,11 @@ export function MetricMiniChart({ day, metricLabel, metricId, unit, series }: Me
           <g key={`${seriesIndex}-${segmentIndex}`}>
             <path
               d={points.map(({ x, y }, index) => `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ")}
-              className={`fill-none ${STROKES[seriesIndex % STROKES.length]}`}
+              className="fill-none stroke-white"
               strokeWidth={2}
               strokeLinecap="round"
               strokeLinejoin="round"
+              strokeDasharray={seriesIndex === 1 ? "3 2" : undefined}
             />
             {points.map(({ x, y }, pointIndex) => (
               <circle key={pointIndex} cx={x.toFixed(1)} cy={y.toFixed(1)} r={1.6} className="fill-white" />

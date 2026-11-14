@@ -29,6 +29,19 @@ const TRENDS = [
 const selector = (page: Page) => page.locator("#mission-day-selector");
 const card = (page: Page, crewId: string) => page.locator(`.crew-card[data-crew='${crewId}']`);
 
+function contrastRatio(first: string, second: string) {
+  const luminance = (color: string) => {
+    const channels = color.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
+    const linear = channels.map((channel) => {
+      const value = channel / 255;
+      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  };
+  const [lighter, darker] = [luminance(first), luminance(second)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 /** Range fill is idempotent, so retrying it until React applies it also waits for hydration. */
 async function selectDay(page: Page, day: number) {
   await expect(async () => {
@@ -75,6 +88,8 @@ test.describe("crew overview", () => {
     for (const [index, person] of PROFILES.entries()) {
       const current = cards.nth(index);
       await expect(current.locator(".crew-name")).toHaveText(person.name);
+      await expect(current.getByText("7-day trend", { exact: true })).toHaveCount(0);
+      await expect(current.getByText(/^(Stable|Monitoring|Simulated alert|Active|Resting)$/)).toHaveCount(0);
       await expect(current.locator("[data-metric-readout]:not([data-metric-readout='spo2'])")).toHaveCount(4);
       await expect(current.locator(".oxygen-value")).toHaveText("Unknown");
       await expect(current.locator(".mini-sparkline")).toHaveCount(4);
@@ -86,6 +101,30 @@ test.describe("crew overview", () => {
         borderColor: getComputedStyle(node).borderTopColor,
       })));
       expect(styles.every(({ background, borderWidth, borderColor }) => background !== "rgba(0, 0, 0, 0)" && borderWidth === "2px" && borderColor !== "rgba(0, 0, 0, 0)")).toBe(true);
+      const graphics = await tiles.evaluateAll((nodes) => nodes.flatMap((node) => {
+        const background = getComputedStyle(node).backgroundColor;
+        return [
+          ...Array.from(node.querySelectorAll("svg[data-mini-chart] path"), (path) => ({ background, paint: getComputedStyle(path).stroke })),
+          ...Array.from(node.querySelectorAll("svg[data-mini-chart] circle"), (circle) => ({ background, paint: getComputedStyle(circle).fill })),
+        ];
+      }));
+      expect(graphics.length).toBeGreaterThan(0);
+      expect(graphics.every(({ background, paint }) => contrastRatio(background, paint) >= 3)).toBe(true);
+      const statusBackgrounds = await page.evaluate(() => {
+        const probe = document.createElement("span");
+        document.body.append(probe);
+        const backgrounds = ["ok", "warn", "alert", "unknown"].map((tone) => {
+          probe.className = `bg-status-${tone}-surface`;
+          return getComputedStyle(probe).backgroundColor;
+        });
+        probe.remove();
+        return backgrounds;
+      });
+      expect(statusBackgrounds.every((background) => graphics.every(({ paint }) => contrastRatio(background, paint) >= 3))).toBe(true);
+      const bpLines = current.locator("[data-metric-readout='bloodPressure'] svg[data-mini-chart] path");
+      const dashPatterns = await bpLines.evaluateAll((paths) => paths.map((path) => getComputedStyle(path).strokeDasharray));
+      expect(dashPatterns.length).toBeGreaterThanOrEqual(2);
+      expect(dashPatterns.some((pattern) => pattern !== "none")).toBe(true);
     }
     await expectCardsMatchDay(page, TOTAL);
     await expectChartsMatchDay(page, TOTAL);

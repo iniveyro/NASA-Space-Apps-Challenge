@@ -1,16 +1,14 @@
 import Link from "next/link";
 import {
-  activityLabel,
   formatValue,
   getMetric,
-  healthLabel,
   metricReading,
   resolveDayScenario,
   type CrewDayReading,
   type MetricId,
   type Profile,
 } from "@/features/crew-health-data";
-import { Avatar, StatusText, toneBorder, toneFor, toneSurface } from "@/shared/design-system";
+import { Avatar, toneBorder, toneFor, toneSurface } from "@/shared/design-system";
 import { cn } from "@/shared/lib/cn";
 
 import { MetricMiniChart, type MiniChartSeries } from "./MetricMiniChart";
@@ -56,8 +54,7 @@ function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProp
       </span>
       <span className="metric-status inline-flex items-center gap-1.5 text-xs leading-tight font-bold">{scenario.label}</span>
       {trends[metricId] ? (
-        <span className="flex items-center justify-between gap-1 text-micro text-white/90">
-          <span>7-day trend</span>
+        <span className="flex items-center justify-end">
           <MetricMiniChart
             day={day}
             metricLabel={metric.label.toLowerCase()}
@@ -72,18 +69,18 @@ function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProp
   );
 }
 
-/** Lighter crew summary card for the selected mission day. The whole card is a single link to the astronaut profile. */
+/** Neutral crew summary card for the selected mission day. The whole card is a single link to the astronaut profile. */
 export function CrewCard({ person, day, reading, trends, events }: CrewCardProps) {
   return (
     <article
       data-crew={person.id}
-      className="crew-card min-w-0 rounded-2xl border border-console-border bg-console p-0 text-console-text shadow-card max-sm:p-4.25 lg:max-xl:p-4"
+      className="crew-card min-w-0 rounded-2xl border border-border bg-surface-muted p-0 text-text-strong shadow-card max-sm:p-4.25 lg:max-xl:p-4"
     >
       <Link
         href={`/astronaut/${person.id}`}
         aria-label={`Open ${person.name} profile`}
         data-profile-route={person.id}
-        className="crew-card-action block h-full w-full rounded-2xl bg-console-raised p-4.5 text-left text-current no-underline hover:bg-console-hover"
+        className="crew-card-action block h-full w-full rounded-2xl bg-surface-muted p-4.5 text-left text-current no-underline hover:bg-surface"
       >
         <span className="flex min-w-0 items-center gap-3.5">
           <Avatar initials={person.initials} variant="console" className="avatar" />
@@ -91,12 +88,8 @@ export function CrewCard({ person, day, reading, trends, events }: CrewCardProps
             <span className="crew-name mb-0.5 block text-lg leading-snug font-strong wrap-anywhere" role="heading" aria-level={3}>
               {person.name}
             </span>
-            <span className="block text-sm text-console-muted">{person.role}</span>
+            <span className="block text-sm text-text-secondary">{person.role}</span>
           </span>
-        </span>
-        <span className="mt-4.25 mb-3.5 flex flex-wrap items-center gap-2 border-t border-console-divider pt-3.5">
-          <StatusText variant="console" status={person.health} label={healthLabel(person.health)} />
-          <StatusText variant="console" status={person.activity} label={activityLabel(person.activity)} />
         </span>
         {events.length ? (
           <span className="mb-3 flex flex-col gap-1.5" role="list" aria-label={`Scenario events on day ${day}`}>
@@ -105,9 +98,9 @@ export function CrewCard({ person, day, reading, trends, events }: CrewCardProps
                 key={event.code}
                 role="listitem"
                 data-crew-event={event.code}
-                className="crew-event block min-w-0 rounded-md border border-console-tile-border bg-console-raised px-2.5 py-2 text-xs text-console-muted"
+                className="crew-event block min-w-0 rounded-md border border-border bg-surface px-2.5 py-2 text-xs text-text-secondary"
               >
-                <span className="block font-bold text-console-text">Scenario event · {event.label}</span>
+                <span className="block font-bold text-text-strong">Scenario event · {event.label}</span>
                 {event.detail ? <span className="block wrap-anywhere">{event.detail}</span> : null}
               </span>
             ))}
@@ -126,8 +119,8 @@ export function CrewCard({ person, day, reading, trends, events }: CrewCardProps
             <span className="text-xs text-console-muted">Simulated point reading · not recorded in the mission dataset</span>
           </span>
         </span>
-        <span aria-hidden="true" className="mt-3.25 flex items-center justify-between border-t border-console-divider pt-2.5 text-caption font-semibold text-console-faint">
-          Open profile <span className="text-lg">→</span>
+        <span aria-hidden="true" className="mt-3.25 flex items-center justify-between border-t border-divider pt-2.5 text-caption font-semibold text-text-subtle">
+          Open profile <span className="text-lg text-primary">→</span>
         </span>
       </Link>
     </article>
