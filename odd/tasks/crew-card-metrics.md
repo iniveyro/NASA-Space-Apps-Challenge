@@ -10,7 +10,7 @@ Make astronaut cards lighter and four vital tiles visibly status-tinted with str
 - RDD: off globally. Delivery strategy: ask-on-risk. Forecast: about 250–350 authored changed lines; one cohesive work unit. No PR planned.
 
 ## Tasks
-- [ ] T1 — Implement lighter cards, status fills/strong borders and four mission-backed mini charts; add focused tests and e2e coverage, verify, and commit as one behavior unit.
+- [x] T1 — Implement lighter cards, status fills/strong borders and four mission-backed mini charts; add focused tests and e2e coverage, verify, and commit as one behavior unit.
   - Route: delegated direct. Evidence: multiple non-trivial UI files and testing; writer reads its own preparation.
   - Acceptance: existing design tokens and tone mappings only; chart values follow mission day; missing/non-finite samples remain missing; no fake waveform or clinical thresholds; BP shows both pressure series if charted; radiation remains cumulative with its existing displayed unit (mSv; AGENTS.md says mGy, a pre-existing discrepancy left outside this change); SpO2 untouched; responsive and accessible.
   - Checks: `npm run lint -- --ignore-pattern ".artifacts/**"`; `npm run typecheck`; `npm test`; `npm run build`; `npm run test:e2e`.
@@ -20,7 +20,7 @@ Make astronaut cards lighter and four vital tiles visibly status-tinted with str
   - Visual screenshot: `.artifacts/crew-card-metrics-desktop.png`, captured with installed Chrome and inspected by parent. Independent verification: focused unit tests 4/4 and overview e2e 6/6 passed; no functional findings.
   - Runtime harness: Playwright crew overview flow.
   - Rollback: overview styling/history charts and their tests only; shared data and other features unaffected.
-  - Commit: pending. RDD: disabled/unmanaged. Authored line count: approximately 234, excluding pre-existing lockfile edits. Native risk assessment unavailable due to untracked-file declaration; treated high for verification and independent verifier completed. Parent spot check: mini-chart unit tests 4/4 passed.
+  - Commit: `bb3f9ca` (feature, tests and evidence). RDD: disabled/unmanaged. Authored line count: 260 including the task document, excluding pre-existing lockfile edits. Native risk assessment unavailable due to untracked-file declaration; treated high for verification and independent verifier completed. Parent spot check: mini-chart unit tests 4/4 passed.
 
 ## Progress and next step
-Implementation and checks are complete. Commit is pending parent diff readback as requested; do not close T1 until the work-unit commit identity is recorded. Engram mirror topic: `odd/crew-card-metrics/tasks`.
+T1 complete, independently verified and committed. Next step: user visual review; no push or PR performed. Engram mirror topic: `odd/crew-card-metrics/tasks`.
