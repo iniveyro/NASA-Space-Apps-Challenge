@@ -1,4 +1,37 @@
+# Python (data pipeline)
 __pycache__/
 *.pyc
 .venv/
+
+# Local screenshots and scratch output
 .artifacts/
+
+# Dependencies (npm is the only package manager; other lockfiles are ignored)
+/node_modules
+pnpm-lock.yaml
+yarn.lock
+
+# Next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# Testing
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Env files
+.env*
+
+# Vercel
+.vercel
+
+# Misc
+.DS_Store
+*.pem
+npm-debug.log*
