@@ -7,7 +7,7 @@ export { SectionHeading } from "./ui/SectionHeading";
 export { SegmentedToggle } from "./ui/SegmentedToggle";
 export { SiteHeader } from "./ui/SiteHeader";
 export { StatusText } from "./ui/StatusText";
-export { toneBorder, toneDot, toneFor, toneSoft, toneSurface } from "./status";
+export { toneBorder, toneDot, toneFor, toneSoft, toneSurface, toneToken } from "./status";
 export type { Tone } from "./status";
 export { readToken } from "./read-token";
 export { THEME_COLOR } from "./meta";
