@@ -24,7 +24,7 @@ npm run dev     # http://localhost:3000
 Routes:
 
 - `/` — crew overview. Each card links to its profile.
-- `/astronaut/<id>` — profile (`mira-chen`, `elias-okafor`, `sofia-alvarez`, `noah-williams`). The four profiles are prerendered at build time; unknown ids show a not-found page.
+- `/astronaut/<id>` — profile (`ines`, `kanji`, `malik`, `sofia`). The four profiles are prerendered at build time; unknown ids show a not-found page.
 
 ### Scripts
 
@@ -64,7 +64,7 @@ Features are independent folders with a public `index.ts`. Coding agents work on
 - SpO₂ and glucose are simulated point readings, not continuous sensor streams. Mood and stress are self-reported scales, not brain measurements.
 - Brain, Heart, and Whole body are navigation groups for existing metrics, not organ measurements. The body map supports pointer selection; its adjacent buttons are keyboard accessible.
 - Green, amber, and red statuses are authored for this interface, not inferred from thresholds or validated clinical ranges. Missing context remains unknown, and no treatment recommendations are provided.
-- Radiation is cumulative, nonnegative, nondecreasing mGy; it is not displayed as a rate or personal-physiology baseline.
+- Radiation is cumulative, nonnegative, nondecreasing mSv (UMBRAL simulation); it is not displayed as a rate or personal-physiology baseline.
 
 All names, values, dates, labels, and statuses are fictional fixtures. The interface contains one concise simulated-data notice.
 

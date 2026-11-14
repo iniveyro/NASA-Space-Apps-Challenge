@@ -2,7 +2,7 @@ import { expect, test } from "./fixtures";
 
 test.describe("body map", () => {
   test("region buttons select their metric group by click and keyboard", async ({ page }) => {
-    await page.goto("/astronaut/elias-okafor");
+    await page.goto("/astronaut/kanji");
     const callout = page.locator("#body-callout-text");
     await expect(callout).toHaveText("Regions are metric-navigation groups, not organ measurements.");
 
@@ -23,13 +23,13 @@ test.describe("body map", () => {
   });
 
   test("selecting a metric highlights its region", async ({ page }) => {
-    await page.goto("/astronaut/elias-okafor");
+    await page.goto("/astronaut/kanji");
     await page.locator("[data-metric='stress']").click();
     await expect(page.locator("[data-region='brain']")).toHaveAttribute("aria-pressed", "true");
   });
 
   test("the illustration renders and its head polygons select the brain group", async ({ page }) => {
-    await page.goto("/astronaut/elias-okafor");
+    await page.goto("/astronaut/kanji");
     const polygons = page.locator("#body-model polygon");
     await expect(polygons.first()).toBeAttached();
     const headIndex = await polygons.evaluateAll((nodes) =>

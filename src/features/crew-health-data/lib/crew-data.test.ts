@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import * as data from "./crew-data";
+import { parseCrewDaily } from "./mission-csv";
 import type { BloodPressureReading, MetricScenario } from "./types";
 
 type MutableBase = Record<string, unknown>;
@@ -18,9 +20,31 @@ describe("crew health data", () => {
     expect(data.PROFILES).toHaveLength(4);
     expect(new Set(data.PROFILES.map((profile) => profile.id)).size).toBe(4);
     expect(data.PROFILES.every((profile) => profile.age > 0 && profile.weightKg > 0 && profile.sex)).toBe(true);
-    expect(data.PROFILES[3].activity).toBe("resting");
-    expect(data.PROFILES[3].health).toBe("stable");
-    expect(data.PROFILES.map((profile) => profile.health)).toEqual(["monitoring", "stable", "simulated-alert", "stable"]);
+    expect(data.PROFILES.map((profile) => profile.id)).toEqual(["ines", "kanji", "malik", "sofia"]);
+    expect(data.PROFILES[2].activity).toBe("resting");
+    expect(data.PROFILES[2].health).toBe("stable");
+    expect(data.PROFILES.map((profile) => profile.health)).toEqual(["stable", "monitoring", "stable", "simulated-alert"]);
+  });
+
+  it("anchors each profile baseline to its UMBRAL mission day-1 simulated reading", () => {
+    const csv = readFileSync(new URL("../../../../data/processed/crew_daily.csv", import.meta.url), "utf-8");
+    const dayOne = parseCrewDaily(csv).filter((reading) => reading.day === 1);
+    expect(dayOne.map((reading) => reading.crewId)).toEqual(data.PROFILES.map((profile) => profile.id));
+    for (const profile of data.PROFILES) {
+      const reading = dayOne.find((item) => item.crewId === profile.id)!;
+      expect(profile.base).toMatchObject({
+        heartRate: reading.heartRate,
+        systolic: reading.systolic,
+        diastolic: reading.diastolic,
+        temperature: reading.temperature,
+        sleep: reading.sleep,
+        mood: reading.mood,
+        glucose: reading.glucose,
+        radiation: reading.radiation,
+      });
+    }
+    expect(data.MISSION_END).toBe("2029-06-12");
+    expect(data.MISSION_DAY).toBe(942);
   });
 
   it("provides ten uniquely identified metrics with explicit units and regions", () => {
@@ -32,7 +56,7 @@ describe("crew health data", () => {
     expect(metrics.temperature.unit).toBe("°C");
     expect(metrics.spo2.unit).toBe("%");
     expect(metrics.glucose.unit).toBe("mg/dL");
-    expect(metrics.radiation.unit).toBe("mGy");
+    expect(metrics.radiation.unit).toBe("mSv");
     expect(metrics.radiation.region).toBe("body");
     expect(metrics.sleep.region).toBe("brain");
     expect(metrics.sleep.description).toMatch(/self-reported/i);
@@ -85,7 +109,7 @@ describe("crew health data", () => {
   });
 
   it("unknown metric identifiers fail rather than returning an empty history", () => {
-    expect(() => data.getSeries("mira-chen", "unknown", 30)).toThrow(/Unknown metric/);
+    expect(() => data.getSeries("ines", "unknown", 30)).toThrow(/Unknown metric/);
   });
 
   it("every fictional profile has explicit demo reference scenarios for all ten metrics", () => {
@@ -100,17 +124,17 @@ describe("crew health data", () => {
       }
     }
     expect(states.filter((status) => status === "within-demo-reference").length).toBeGreaterThanOrEqual(38);
-    expect(data.resolveMetricScenario("sofia-alvarez", "heartRate", data.latest("sofia-alvarez", "heartRate")).status).toBe("demo-alert");
-    expect(data.resolveMetricScenario("mira-chen", "bloodPressure", data.latest("mira-chen", "bloodPressure")).status).toBe("demo-deviation");
+    expect(data.resolveMetricScenario("sofia", "bloodPressure", data.latest("sofia", "bloodPressure")).status).toBe("demo-alert");
+    expect(data.resolveMetricScenario("kanji", "heartRate", data.latest("kanji", "heartRate")).status).toBe("demo-deviation");
     expect(data.METRICS.find((metric) => metric.id === "radiation")!.demoReference).toMatch(/not a personal-physiology baseline or a universal safe limit/i);
   });
 
   it("scenario resolution is metadata-driven, non-mutating, and unknown when required context is missing", () => {
     const before = JSON.stringify(data.PROFILES);
-    expect(data.resolveMetricScenario("sofia-alvarez", "heartRate", 1).status).toBe("demo-alert");
-    expect(data.resolveMetricScenario("sofia-alvarez", "heartRate", null).status).toBe("unknown");
+    expect(data.resolveMetricScenario("kanji", "heartRate", 1).status).toBe("demo-deviation");
+    expect(data.resolveMetricScenario("kanji", "heartRate", null).status).toBe("unknown");
     expect(data.resolveMetricScenario("missing-profile", "heartRate", 72).status).toBe("unknown");
-    expect(data.resolveMetricScenario("sofia-alvarez", "missing-metric", 72).status).toBe("unknown");
+    expect(data.resolveMetricScenario("kanji", "missing-metric", 72).status).toBe("unknown");
     expect(JSON.stringify(data.PROFILES)).toBe(before);
     expect(data.ENVIRONMENT).toBe("Microgravity");
     expect(data.METRICS.find((metric) => metric.id === "sleep")!.demoReference).toMatch(/self-reported/i);
@@ -118,9 +142,9 @@ describe("crew health data", () => {
   });
 
   it("incomplete or non-finite paired readings and baselines resolve to explicit unknown", () => {
-    const profile = data.PROFILES.find((item) => item.id === "mira-chen")!;
+    const profile = data.PROFILES.find((item) => item.id === "sofia")!;
     const base = profile.base as unknown as MutableBase;
-    const complete = { systolic: 118, diastolic: 76 };
+    const complete = { systolic: 116, diastolic: 74 };
     const malformedReadings = [
       { systolic: 118 },
       { diastolic: 76 },
@@ -132,7 +156,7 @@ describe("crew health data", () => {
       expectUnknownScenario(data.resolveMetricScenario(profile.id, "bloodPressure", reading));
       expect(data.formatValue("bloodPressure", reading)).toBe("Unknown");
     }
-    expect(data.resolveMetricScenario(profile.id, "bloodPressure", complete).status).toBe("demo-deviation");
+    expect(data.resolveMetricScenario(profile.id, "bloodPressure", complete).status).toBe("demo-alert");
 
     const original = base.diastolic;
     try {
@@ -148,7 +172,7 @@ describe("crew health data", () => {
   });
 
   it("non-finite scalar readings and baselines resolve to unknown without changing fixtures", () => {
-    const profile = data.PROFILES.find((item) => item.id === "sofia-alvarez")!;
+    const profile = data.PROFILES.find((item) => item.id === "kanji")!;
     const base = profile.base as unknown as MutableBase;
     const original = base.heartRate;
     const before = JSON.stringify(data.PROFILES);
@@ -159,12 +183,12 @@ describe("crew health data", () => {
       }
       for (const baseline of [null, NaN, Infinity, -Infinity]) {
         base.heartRate = baseline;
-        expectUnknownScenario(data.resolveMetricScenario(profile.id, "heartRate", 104));
+        expectUnknownScenario(data.resolveMetricScenario(profile.id, "heartRate", 48));
       }
     } finally {
       base.heartRate = original;
     }
     expect(JSON.stringify(data.PROFILES)).toBe(before);
-    expect(data.resolveMetricScenario(profile.id, "heartRate", data.latest(profile.id, "heartRate")).status).toBe("demo-alert");
+    expect(data.resolveMetricScenario(profile.id, "heartRate", data.latest(profile.id, "heartRate")).status).toBe("demo-deviation");
   });
 });

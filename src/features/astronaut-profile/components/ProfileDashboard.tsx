@@ -32,7 +32,7 @@ export function ProfileDashboard({ person }: { person: Profile }) {
           className="mb-3.25"
           title="Latest readings"
           titleId="readings-title"
-          description="Fictional point readings · 18 Jun 2042"
+          description="Fictional point readings · 12 Jun 2029"
           aside={<span className="text-caption text-muted">Colored states are authored demo scenarios, not medical assessments.</span>}
         />
         <MetricGrid person={person} selectedMetricId={metricId} onSelect={selectMetric} />
