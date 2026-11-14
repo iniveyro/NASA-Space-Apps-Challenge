@@ -1,0 +1,10 @@
+day,date,crew,event,detail
+120,2027-03-13,Kanji,viral_reactivation,"rest HR 48->78, T +0.6 C, low HRV, 5 h sleep (days 120-122)"
+211,2027-06-12,Ines,orthostatic_test,"supine 118/76 -> standing 112/74 mmHg, HR +14 bpm"
+211,2027-06-12,Kanji,orthostatic_test,"supine 120/76 -> standing 114/74 mmHg, HR +12 bpm"
+211,2027-06-12,Malik,orthostatic_test,"supine 120/78 -> standing 113/75 mmHg, HR +16 bpm"
+211,2027-06-12,Sofia,orthostatic_test,"supine 116/74 -> standing 94/68 mmHg, HR +38 bpm -> meets OH criterion"
+493,2028-03-20,Ines,solar_storm,event dose 8.1 mSv (EVA)
+493,2028-03-20,Kanji,solar_storm,event dose 4.0 mSv (refuge)
+493,2028-03-20,Malik,solar_storm,event dose 4.0 mSv (refuge)
+493,2028-03-20,Sofia,solar_storm,event dose 8.1 mSv (EVA)

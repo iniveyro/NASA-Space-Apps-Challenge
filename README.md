@@ -1,10 +1,16 @@
-# ASTRA Health
+# T2H Team - AstroHealth
 
-By the T2H Team.
+NASA Space Apps Challenge 2026 · AstroHealth: astronaut health self-monitoring, demonstrated on UMBRAL, a simulated crewed Mars mission (2026-2029).
+
+## Mission data
+
+Data and scripts for the demo are in `data/` and `scripts/`. See [data/README.md](data/README.md) for the file list, sources, assumptions and how to rebuild.
+
+## ASTRA Health
 
 ASTRA Health is a local, fictional astronaut wellness dashboard with a crew overview and individual profiles. It is an interface prototype, not telemetry or medical guidance.
 
-## Quick start
+### Quick start
 
 1. Open `index.html` in a current browser. No package manager, build step, or network request is required; the body-map library is included locally.
 2. Select a crew card to open `#astronaut/<id>`, or use **Back to crew overview**. Hash routes retain browser back/forward behavior.
@@ -16,7 +22,7 @@ For a local HTTP preview, run:
 python -m http.server 4173 --bind 127.0.0.1
 ```
 
-## Prototype boundaries
+### Prototype boundaries
 
 - Four fictional profiles show demographics, independent health/activity labels, daily heart-rate history, paired blood pressure, temperature, cumulative radiation, and a latest SpO₂ percentage ring.
 - Ten individual readings use deterministic 30-day histories; the 7-day view is the latest week. Blood pressure keeps systolic and diastolic series distinct.
@@ -27,11 +33,11 @@ python -m http.server 4173 --bind 127.0.0.1
 
 All names, values, dates, labels, and statuses are fictional fixtures. The interface contains one concise simulated-data notice.
 
-## Vendored body map
+### Vendored body map
 
 The browser loads `vendor/body-highlighter-3.0.2/body-highlighter.browser.js` as a local classic script so direct `file://` and local HTTP launch paths remain available. It is adapted from the standalone CommonJS distribution of [`body-highlighter` 3.0.2](https://www.npmjs.com/package/body-highlighter) (source: [GitHub](https://github.com/GV79/body-highlighter)); the upstream MIT license is included beside it. The adapter supplies a local `module`/`exports` wrapper and exposes only the needed API. No package scripts or runtime network requests are used. The upstream CJS source SHA-256 is `fff86f7b4d9c2753256499f55a4d7f5ba320260a03998651e3a81298c5d184ff`.
 
-## Verification
+### Verification
 
 ```sh
 node --check app.js
@@ -43,7 +49,7 @@ node tests/browser-smoke.cjs
 
 The browser smoke test uses local Python and Chrome at `C:/Program Files/Google/Chrome/Application/chrome.exe`; it does not install packages or access remote services. It checks `file://` and HTTP routes/history, profile and metric consistency, body-map clicks and keyboard controls, charts, nearest-date touch selection, reduced motion, responsive overview/detail layouts, and horizontal overflow from 320–3840px. Screenshots are written to ignored `.artifacts/` files.
 
-## Files
+### Files
 
 | File | Purpose |
 | --- | --- |
