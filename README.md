@@ -1,5 +1,7 @@
 # ASTRA Health
 
+By the T2H Team.
+
 ASTRA Health is a local, fictional astronaut wellness dashboard with a crew overview and individual profiles. It is an interface prototype, not telemetry or medical guidance.
 
 ## Quick start
