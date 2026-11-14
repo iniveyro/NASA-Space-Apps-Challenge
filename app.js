@@ -1,53 +1,73 @@
 (function () {
   "use strict";
   const { METRICS, PROFILES, ENVIRONMENT, getProfile, getSeries, latest, formatValue, resolveMetricScenario } = window.AstraData;
-  const state = { profileId: PROFILES[0].id, metricId: "heartRate", days: 30, region: null, hoverRegion: null, focusRegion: null, lastTouchAt: 0 };
+  const state = { profileId: PROFILES[0].id, metricId: "heartRate", days: 30, region: null, hoverRegion: null, focusRegion: null, lastTouchAt: 0, bodyHighlighter: null };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
   const metricFor = (id) => METRICS.find((metric) => metric.id === id);
   const stateClass = (status) => status === "monitoring" ? "monitoring" : status === "simulated-alert" ? "simulated-alert" : "stable";
   const healthLabel = (status) => ({ stable: "Stable", monitoring: "Monitoring", "simulated-alert": "Simulated alert" })[status];
-  const metricStatusMark = (status) => ({ "within-demo-reference": "✓", "demo-deviation": "!", "demo-alert": "!", unknown: "?" })[status] || "?";
   const metricStatusClass = (status) => ["within-demo-reference", "demo-deviation", "demo-alert"].includes(status) ? status : "unknown";
   const regionMetrics = {
     heart: ["heartRate", "bloodPressure"],
     brain: ["sleep", "mood", "stress"],
-    lungs: ["spo2"],
-    body: ["temperature", "activity", "glucose", "radiation"]
+    body: ["temperature", "activity", "spo2", "glucose", "radiation"]
   };
   const regionDescriptions = {
-    heart: "Heart-associated signals: heart rate and paired blood-pressure point readings.",
-    brain: "Self-reported sleep, mood, and stress. These are not brain measurements.",
-    lungs: "SpO₂: simulated oxygen saturation point readings; not a continuous sensor stream.",
-    body: "Whole-body signals: temperature, activity, glucose point readings, and cumulative radiation dose."
+    heart: "Heart-associated readings: heart rate and blood pressure.",
+    brain: "Brain-associated self-reports: sleep, mood, and stress.",
+    body: "Whole-body signals: temperature, activity, SpO₂, glucose, and radiation."
   };
 
   function dateLabel(date) {
     return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(date + "T00:00:00Z"));
   }
   function selectedProfile() { return getProfile(state.profileId); }
+  function heartRateSparkline(profileId) {
+    const points = getSeries(profileId, "heartRate", 7).map((point) => point.value);
+    if (points.length !== 7 || points.some((value) => !Number.isFinite(value))) return "<span class=\"trend-unavailable\">Unavailable</span>";
+    const min = Math.min(...points); const max = Math.max(...points); const range = max - min || 1;
+    const coordinates = points.map((value, index) => [4 + index * 18, 27 - (value - min) * 20 / range]);
+    const path = coordinates.map(([x, y], index) => `${index ? "L" : "M"}${x} ${y}`).join(" ");
+    const accessibleValues = points.join(", ");
+    return `<svg class="mini-sparkline" viewBox="0 0 116 32" role="img" aria-label="Seven daily fictional heart-rate readings: ${accessibleValues} beats per minute"><path d="${path}"/><circle cx="${coordinates.at(-1)[0]}" cy="${coordinates.at(-1)[1]}" r="2.5"/></svg>`;
+  }
+  function oxygenRing(profileId) {
+    const value = latest(profileId, "spo2");
+    const formatted = formatValue("spo2", value);
+    const valid = typeof value === "number" && Number.isFinite(value);
+    if (!valid) return `<span class="oxygen-reading oxygen-unavailable" role="img" aria-label="SpO₂: ${escapeHtml(formatted)}. Fictional point reading."><span class="oxygen-value">${escapeHtml(formatted)}</span><span class="oxygen-label">SpO₂</span></span>`;
+    const circumference = 2 * Math.PI * 17;
+    const offset = circumference * (1 - value / 100);
+    return `<span class="oxygen-reading" role="img" aria-label="SpO₂: ${escapeHtml(formatted)}%. Fictional point reading."><svg viewBox="0 0 44 44" aria-hidden="true"><circle class="oxygen-track" cx="22" cy="22" r="17"/><circle class="oxygen-progress" cx="22" cy="22" r="17" stroke-dasharray="${circumference.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"/></svg><span class="oxygen-value">${escapeHtml(formatted)}<small>%</small></span><span class="oxygen-label">SpO₂</span></span>`;
+  }
   function renderCrew() {
     $("#crew-grid").innerHTML = PROFILES.map((person) => {
       const values = [
         ["heartRate", latest(person.id, "heartRate")],
         ["bloodPressure", latest(person.id, "bloodPressure")],
         ["temperature", latest(person.id, "temperature")],
-        ["radiation", latest(person.id, "radiation")]
+        ["radiation", latest(person.id, "radiation")],
+        ["spo2", latest(person.id, "spo2")]
       ];
       const healthClass = stateClass(person.health);
       const activityClass = person.activity === "resting" ? "resting" : "active";
       return `<article class="crew-card">
-        <div class="crew-card-heading"><span class="avatar" aria-hidden="true">${escapeHtml(person.initials)}</span><div class="crew-identity"><h3>${escapeHtml(person.name)}</h3><p>${escapeHtml(person.role)}</p></div></div>
-        <div class="crew-statuses"><span class="status-text ${healthClass}"><i class="state-dot" aria-hidden="true"></i>${escapeHtml(healthLabel(person.health))}</span><span class="status-text ${activityClass}"><i class="state-dot" aria-hidden="true"></i>${person.activity === "resting" ? "Resting" : "Active"}</span></div>
-        <dl class="crew-vitals">${values.map(([metricId, value]) => {
+        <button class="crew-card-action" type="button" data-profile-route="${escapeHtml(person.id)}" aria-label="Open ${escapeHtml(person.name)} profile">
+        <span class="crew-card-heading"><span class="avatar" aria-hidden="true">${escapeHtml(person.initials)}</span><span class="crew-identity"><span class="crew-name" role="heading" aria-level="3">${escapeHtml(person.name)}</span><span class="crew-role">${escapeHtml(person.role)}</span></span></span>
+        <span class="crew-statuses"><span class="status-text ${healthClass}">${escapeHtml(healthLabel(person.health))}</span><span class="status-text ${activityClass}">${person.activity === "resting" ? "Resting" : "Active"}</span></span>
+        <span class="crew-vitals" role="list">${values.map(([metricId, value]) => {
           const metric = metricFor(metricId);
           const formatted = formatValue(metricId, value);
           const scenario = resolveMetricScenario(person.id, metricId, value);
           const statusClass = metricStatusClass(scenario.status);
-          return `<div class="vital-tile ${statusClass}" aria-label="${escapeHtml(metric.label)}: ${escapeHtml(formatted)} ${escapeHtml(metric.unit)}. ${escapeHtml(scenario.label)}. Simulated demo reference only."><dt>${escapeHtml(metric.label)}</dt><dd>${escapeHtml(formatted)} <span>${escapeHtml(metric.unit)}</span></dd><span class="metric-status"><b aria-hidden="true">${metricStatusMark(scenario.status)}</b>${escapeHtml(scenario.label)}</span></div>`;
-        }).join("")}</dl>
-        <a class="card-link" href="#astronaut/${escapeHtml(person.id)}" aria-label="Open ${escapeHtml(person.name)} profile">View profile <span aria-hidden="true">→</span></a>
+          if (metricId === "spo2") return `<span class="vital-tile oxygen-tile" data-metric-readout="spo2" role="listitem">${oxygenRing(person.id)}<span class="oxygen-note">Simulated point reading</span></span>`;
+          const trend = metricId === "heartRate" ? `<span class="mini-trend"><span>7-day trend</span>${heartRateSparkline(person.id)}</span>` : "";
+          return `<span class="vital-tile ${statusClass}" data-metric-readout="${metricId}" role="listitem" aria-label="${escapeHtml(metric.label)}: ${escapeHtml(formatted)} ${escapeHtml(metric.unit)}. ${escapeHtml(scenario.label)}."><span class="vital-label">${escapeHtml(metric.label)}</span><span class="vital-value">${escapeHtml(formatted)} <small>${escapeHtml(metric.unit)}</small></span><span class="metric-status">${escapeHtml(scenario.label)}</span>${trend}</span>`;
+        }).join("")}</span>
+        <span class="card-action-hint" aria-hidden="true">Open profile <span>→</span></span>
+        </button>
       </article>`;
     }).join("");
   }
@@ -63,11 +83,10 @@
     $("#profile-sex").textContent = person.sex;
     const health = $("#health-status");
     health.className = `status-text ${stateClass(person.health)}`;
-    health.innerHTML = `<i class="state-dot" aria-hidden="true"></i>${escapeHtml(healthLabel(person.health))}`;
+    health.textContent = healthLabel(person.health);
     const activity = $("#activity-status");
     activity.className = `status-text ${person.activity === "resting" ? "resting" : "active"}`;
-    activity.innerHTML = `<i class="state-dot" aria-hidden="true"></i>${person.activity === "resting" ? "Resting" : "Active"}`;
-    $("#profile-note").textContent = person.health === "simulated-alert" ? "Simulated alert scenario for interface testing only; not a real reading or medical assessment." : person.health === "monitoring" ? "Simulated monitoring scenario for interface testing; no medical assessment is made." : "Routine fictional scenario for interface demonstration only.";
+    activity.textContent = person.activity === "resting" ? "Resting" : "Active";
   }
 
   function renderMetrics() {
@@ -80,7 +99,7 @@
       const display = metric.id === "mood" || metric.id === "stress" ? `${formatted} <span>of 5</span>` : `${formatted} <span>${escapeHtml(metric.unit)}</span>`;
       const note = metric.id === "spo2" || metric.id === "glucose" ? "Simulated point reading" : metric.id === "stress" || metric.id === "mood" ? "Self-reported" : metric.id === "radiation" ? "Cumulative dose" : "Latest simulated value";
       return `<button class="metric-card ${statusClass}" type="button" data-metric="${metric.id}" aria-pressed="${metric.id === state.metricId}" aria-label="${escapeHtml(metric.label)}: ${escapeHtml(formatted)} ${escapeHtml(metric.unit)}. ${escapeHtml(scenario.label)}. ${escapeHtml(metric.description)} Select to view history.">
-        <span class="metric-label">${escapeHtml(metric.label)}</span><strong class="metric-value">${display}</strong><span class="metric-status"><b aria-hidden="true">${metricStatusMark(scenario.status)}</b>${escapeHtml(scenario.label)}</span><span class="metric-note">${escapeHtml(note)}</span>
+        <span class="metric-label">${escapeHtml(metric.label)}</span><strong class="metric-value">${display}</strong><span class="metric-status">${escapeHtml(scenario.label)}</span><span class="metric-note">${escapeHtml(note)}</span>
       </button>`;
     }).join("");
     renderReference(person, metricFor(state.metricId));
@@ -167,17 +186,68 @@
 
   function renderBody() {
     const selected = state.hoverRegion || state.focusRegion || state.region;
-    $("#body-callout-text").textContent = selected ? regionDescriptions[selected] : "Choose a highlighted region.";
+    $("#body-callout-text").textContent = selected ? regionDescriptions[selected] : "Regions are metric-navigation groups, not organ measurements.";
     $$(".body-target").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.region === state.region));
       button.classList.toggle("preview", button.dataset.region === state.hoverRegion || button.dataset.region === state.focusRegion);
     });
+  }
+  function selectRegion(region) {
+    const firstMetric = regionMetrics[region] && regionMetrics[region][0];
+    if (!firstMetric) return;
+    state.region = region; state.hoverRegion = null; state.focusRegion = null;
+    setMetric(firstMetric);
+  }
+  function initializeBodyHighlighter() {
+    const api = window.AstraBodyHighlighter;
+    const container = $("#body-model");
+    if (!api || !container) {
+      if (container) { container.setAttribute("role", "status"); container.textContent = "Body illustration unavailable. Region buttons remain available."; }
+      return;
+    }
+    try {
+      const muscles = api.MuscleType;
+      const groupMuscles = {
+        brain: [muscles.HEAD, muscles.NECK],
+        heart: [muscles.CHEST],
+        body: [...new Set(Object.values(muscles))]
+      };
+      state.bodyHighlighter = api.createBodyHighlighter({
+        container,
+        data: [],
+        bodyColor: "#dce2e8",
+        highlightedColors: ["#8da4ba"],
+        type: api.ModelType.ANTERIOR,
+        wrapperClassName: "body-highlighter",
+        style: { width: "100%", maxWidth: "280px", margin: "0 auto" },
+        svgStyle: { display: "block", width: "100%", height: "auto" },
+        onClick: ({ muscle }) => {
+          const clicked = String(muscle || "").toLowerCase();
+          selectRegion(clicked === "head" || clicked === "neck" ? "brain" : clicked === "chest" ? "heart" : "body");
+        }
+      });
+      if (state.region) state.bodyHighlighter.update({ data: [{ name: regionDescriptions[state.region], muscles: groupMuscles[state.region] }] });
+    } catch {
+      state.bodyHighlighter = null;
+      container.replaceChildren();
+      container.setAttribute("role", "status");
+      container.textContent = "Body illustration unavailable. Region buttons remain available.";
+    }
   }
   function setMetric(id) {
     const metric = metricFor(id);
     if (!metric) return;
     state.metricId = id;
     if (metric.region) state.region = metric.region;
+    if (state.bodyHighlighter && state.region) {
+      const muscles = window.AstraBodyHighlighter.MuscleType;
+      const groupMuscles = {
+        brain: [muscles.HEAD, muscles.NECK],
+        heart: [muscles.CHEST],
+        body: [...new Set(Object.values(muscles))]
+      };
+      state.bodyHighlighter.update({ data: [{ name: regionDescriptions[state.region], muscles: groupMuscles[state.region] }] });
+    }
     $("#chart-tooltip").hidden = true;
     renderMetrics(); renderChart(); renderBody();
   }
@@ -220,12 +290,13 @@
 
   function bindEvents() {
     window.addEventListener("hashchange", () => renderRoute(true));
+    $("#crew-grid").addEventListener("click", (event) => { const button = event.target.closest("[data-profile-route]"); if (button) location.hash = `#astronaut/${button.dataset.profileRoute}`; });
+    $$("[data-route]").forEach((button) => button.addEventListener("click", () => { location.hash = button.dataset.route; }));
     $("#metric-grid").addEventListener("click", (event) => { const button = event.target.closest("[data-metric]"); if (button) setMetric(button.dataset.metric); });
     $$("[data-days]").forEach((button) => button.addEventListener("click", () => { state.days = Number(button.dataset.days); renderChart(); }));
     $(".body-art").addEventListener("click", (event) => {
       const button = event.target.closest(".body-target"); if (!button) return;
-      state.region = button.dataset.region; state.hoverRegion = null; state.focusRegion = null; const firstMetric = regionMetrics[state.region][0];
-      setMetric(firstMetric);
+      selectRegion(button.dataset.region);
     });
     $(".body-art").addEventListener("pointerover", (event) => { const button = event.target.closest(".body-target"); if (button) { state.hoverRegion = button.dataset.region; renderBody(); } });
     $(".body-art").addEventListener("pointerout", (event) => { const from = event.target.closest(".body-target"); const to = event.relatedTarget && event.relatedTarget.closest ? event.relatedTarget.closest(".body-target") : null; if (from && from !== to) { state.hoverRegion = null; renderBody(); } });
@@ -245,5 +316,6 @@
 
   renderCrew();
   bindEvents();
+  initializeBodyHighlighter();
   renderRoute(false);
 })();

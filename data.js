@@ -28,9 +28,9 @@
 
   const ENVIRONMENT = "Microgravity";
   const STATUS_LABELS = {
-    "within-demo-reference": "Within demo reference",
-    "demo-deviation": "Demo deviation",
-    "demo-alert": "Demo alert"
+    "within-demo-reference": "Reference",
+    "demo-deviation": "Deviation",
+    "demo-alert": "Alert"
   };
   // Authored fixture states, deliberately independent of any reading or medical threshold.
   const SCENARIOS = {
@@ -115,7 +115,7 @@
       status: "unknown",
       label: "Unknown",
       baseline: null,
-      baselineLabel: "Demo reference unavailable",
+      baselineLabel: "Reference unavailable",
       reference: "No complete finite fictional reading and reference are available for this metric.",
       evidence: "No demo status is assigned when required reading or baseline data is missing or invalid."
     };

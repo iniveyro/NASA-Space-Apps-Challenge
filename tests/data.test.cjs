@@ -160,7 +160,7 @@ function assertUnknownScenario(scenario) {
   assert.equal(scenario.status, "unknown");
   assert.equal(scenario.label, "Unknown");
   assert.equal(scenario.baseline, null);
-  assert.equal(scenario.baselineLabel, "Demo reference unavailable");
+  assert.equal(scenario.baselineLabel, "Reference unavailable");
   assert.match(scenario.reference, /complete finite fictional reading and reference/i);
   assert.doesNotMatch(`${scenario.label} ${scenario.baselineLabel} ${scenario.reference} ${scenario.evidence}`, /\b(?:undefined|NaN|Infinity)\b/);
 }

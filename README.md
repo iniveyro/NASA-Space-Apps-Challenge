@@ -1,32 +1,33 @@
 # ASTRA Health
 
-ASTRA Health is a local, fictional astronaut wellness dashboard. The crew overview compares four people at once; an individual profile presents simulated readings, history, and an interactive body-map guide. It is an interface prototype, not telemetry or medical guidance.
+ASTRA Health is a local, fictional astronaut wellness dashboard with a crew overview and individual profiles. It is an interface prototype, not telemetry or medical guidance.
 
 ## Quick start
 
-1. Open `index.html` directly in a current browser. No build step, runtime dependency, or network request is required.
-2. Select **View profile** to open `#astronaut/<id>`, or use **Back to crew overview**. Both routes work as direct links and retain browser back/forward behavior.
-3. Select any metric, body-map region, or 7/30-day range to explore the deterministic fictional history.
+1. Open `index.html` in a current browser. No package manager, build step, or network request is required; the body-map library is included locally.
+2. Select a crew card to open `#astronaut/<id>`, or use **Back to crew overview**. Hash routes retain browser back/forward behavior.
+3. Select a metric, body-map group, or 7/30-day range to explore deterministic fictional history.
 
-An optional local preview server is available with Python:
+For a local HTTP preview, run:
 
 ```sh
 python -m http.server 4173 --bind 127.0.0.1
 ```
 
-## What the prototype shows
+## Prototype boundaries
 
-- Four fictional profiles with age, weight, sex, independent health/activity labels, and four crew-overview readings: heart rate, paired blood pressure, temperature, and cumulative radiation dose.
-- Dark neutral crew cards show each overview metric as a large green, amber, or red surface; avatar colors do not identify or rank people. Each metric has its own authored simulated scenario, so one alert can stand out without making the whole profile red.
-- Ten individual readings: heart rate, blood pressure, temperature, sleep, mood, activity, SpO₂, glucose, self-reported stress, and cumulative radiation.
-- Metric details show the current fictional value, fictional preflight context, and the authored demo reference description that explains the displayed status. Missing scenario context resolves to gray/unknown rather than green.
-- Microgravity is the current mission context. Earth, Moon, and Mars are context labels only; this prototype has no environment simulator or environment-specific validated medical ranges, and changing context would not change readings or statuses.
-- Deterministic 30-day histories; the 7-day view is the latest week of the same data. Blood pressure keeps separate systolic and diastolic series.
+- Four fictional profiles show demographics, independent health/activity labels, daily heart-rate history, paired blood pressure, temperature, cumulative radiation, and a latest SpO₂ percentage ring.
+- Ten individual readings use deterministic 30-day histories; the 7-day view is the latest week. Blood pressure keeps systolic and diastolic series distinct.
 - SpO₂ and glucose are simulated point readings, not continuous sensor streams. Mood and stress are self-reported scales, not brain measurements.
-- Radiation is cumulative, nonnegative, nondecreasing mGy; it is not shown as a rate. Bone-health information is educational only and does not estimate personal bone density or future loss.
-- The body map is a navigation aid. Hover/focus previews a region, while selecting it changes the related history. Plot-wide pointer and touch selection finds the nearest date.
+- Brain, Heart, and Whole body are navigation groups for existing metrics, not organ measurements. The body map supports pointer selection; its adjacent buttons are keyboard accessible.
+- Green, amber, and red statuses are authored for this interface, not inferred from thresholds or validated clinical ranges. Missing context remains unknown, and no treatment recommendations are provided.
+- Radiation is cumulative, nonnegative, nondecreasing mGy; it is not displayed as a rate or personal-physiology baseline.
 
-All names, values, dates, labels, and statuses are fictional fixtures. Green/amber/red states are authored for the interface, not inferred from numerical thresholds or medically validated ranges. Radiation is a cumulative mission exposure scenario, not a personal-physiology baseline or universal safe limit. No clinical thresholds or treatment recommendations are used. Bone-health background: [NASA, Risk of Spaceflight-Induced Bone Changes](https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/).
+All names, values, dates, labels, and statuses are fictional fixtures. The interface contains one concise simulated-data notice.
+
+## Vendored body map
+
+The browser loads `vendor/body-highlighter-3.0.2/body-highlighter.browser.js` as a local classic script so direct `file://` and local HTTP launch paths remain available. It is adapted from the standalone CommonJS distribution of [`body-highlighter` 3.0.2](https://www.npmjs.com/package/body-highlighter) (source: [GitHub](https://github.com/GV79/body-highlighter)); the upstream MIT license is included beside it. The adapter supplies a local `module`/`exports` wrapper and exposes only the needed API. No package scripts or runtime network requests are used. The upstream CJS source SHA-256 is `fff86f7b4d9c2753256499f55a4d7f5ba320260a03998651e3a81298c5d184ff`.
 
 ## Verification
 
@@ -34,18 +35,20 @@ All names, values, dates, labels, and statuses are fictional fixtures. Green/amb
 node --check app.js
 node --check data.js
 node --test tests/*.test.cjs
+node --check tests/browser-smoke.cjs
 node tests/browser-smoke.cjs
 ```
 
-The browser smoke test uses local Python and Chrome at `C:/Program Files/Google/Chrome/Application/chrome.exe`; it does not install packages or access remote services. It checks routes/history, profile and metric consistency, semantic metric colors and surfaces, reference/environment wording, body-map behavior, chart periods, nearest-date touch interaction, reduced motion, and 1440px/390px/320px overflow. Screenshots are written to ignored `.artifacts/` files.
+The browser smoke test uses local Python and Chrome at `C:/Program Files/Google/Chrome/Application/chrome.exe`; it does not install packages or access remote services. It checks `file://` and HTTP routes/history, profile and metric consistency, body-map clicks and keyboard controls, charts, nearest-date touch selection, reduced motion, responsive overview/detail layouts, and horizontal overflow from 320–3840px. Screenshots are written to ignored `.artifacts/` files.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Accessible two-view structure and inline body illustration |
-| `styles.css` | Responsive light interface, focus states, and reduced-motion behavior |
-| `data.js` | Fictional profiles, metric definitions, and deterministic histories |
-| `app.js` | Hash routing, view rendering, body-map interaction, and SVG charts |
+| `index.html` | Accessible two-view structure and local body-map script |
+| `styles.css` | Responsive interface, focus states, and reduced-motion behavior |
+| `data.js` | Fictional profiles, metrics, and deterministic histories |
+| `app.js` | Hash routing, view rendering, map interaction, and SVG charts |
 | `tests/data.test.cjs` | Built-in Node tests for data invariants |
 | `tests/browser-smoke.cjs` | Local Chrome/CDP regression checks |
+| `vendor/body-highlighter-3.0.2/` | Pinned distribution, browser adapter, MIT license, and provenance |
