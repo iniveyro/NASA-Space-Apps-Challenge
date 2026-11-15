@@ -9,9 +9,11 @@ const TIMELINE = [
 ].join("\n");
 
 const DAILY = [
-  "day,date,crew,hr_rest_bpm,sbp_mmHg,dbp_mmHg,temp_C,sleep_h,hrv_rmssd_ms,glucose_mg_dL,mood_1to5,dose_cum_mSv,comm,event",
-  "1,2026-11-14,Ines,61,122,68,36.6,6.4,48,72,4,151.8,link,",
-  "120,2027-03-13,Kanji,78,114,,37.1,5.0,42,NaN,3,220.8,link,viral_reactivation",
+  "day,date,crew,hr_rest_bpm,sbp_mmHg,dbp_mmHg,temp_C,sleep_h,hrv_rmssd_ms,glucose_mg_dL,spo2_pct,activity_min,mood_1to5,dose_cum_mSv,comm,event,rr_ms",
+  // 20 beats: Mo = 0.825 s, AMo = 75 %, MxDMn = 0.1 s.
+  "1,2026-11-14,Ines,61,122,68,36.6,6.4,48,72,98,0,4,151.8,link,,800 800 800 800 800 800 800 800 800 800 820 820 820 820 820 900 900 900 900 900",
+  // Too few beats for the stress index.
+  "120,2027-03-13,Kanji,78,114,,37.1,5.0,42,NaN,,39,3,220.8,link,viral_reactivation,770 790 810",
 ].join("\r\n");
 
 const EVENTS = [
@@ -61,9 +63,15 @@ describe("mission CSV parsing", () => {
       sleep: 6.4,
       mood: 4,
       glucose: 72,
+      activity: 0,
+      spo2: 98,
+      stress: expect.closeTo(75 / (2 * 0.825 * 0.1), 6),
       radiation: 151.8,
       event: null,
     });
+    expect(kanji.spo2).toBeNull();
+    expect(kanji.activity).toBe(39);
+    expect(kanji.stress).toBeNull();
     expect(kanji.diastolic).toBeNull();
     expect(kanji.glucose).toBeNull();
     expect(kanji.event).toBe("viral_reactivation");

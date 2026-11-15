@@ -5,7 +5,6 @@ import {
   buildMissionDataset,
   type CrewDayReading,
   type CrewEvent,
-  type MetricId,
   type MissionDay,
 } from "@/features/crew-health-data";
 import { crewDataset, dayReadings, daySeries, parseDayParam, readingText } from "./profile-day";
@@ -28,6 +27,9 @@ function reading(crewId: string, day: number, overrides: Partial<CrewDayReading>
     sleep: 6.5,
     mood: 4,
     glucose: 80,
+    activity: day % 3 === 0 ? 0 : 40,
+    spo2: 98,
+    stress: 150,
     radiation: Number((day * 1.8).toFixed(1)),
     event: null,
     ...overrides,
@@ -48,7 +50,6 @@ const EVENTS: CrewEvent[] = [
 const DATA = buildMissionDataset(DAYS, READINGS, EVENTS);
 const SOFIA = PROFILES.find((profile) => profile.id === "sofia")!;
 const KANJI = PROFILES.find((profile) => profile.id === "kanji")!;
-const UNRECORDED: readonly MetricId[] = ["spo2", "activity", "stress"];
 
 describe("parseDayParam", () => {
   it("falls back to the latest day when the parameter is missing or not a number", () => {
@@ -128,16 +129,15 @@ describe("dayReadings", () => {
     expect(heartRate(220)).toMatchObject({ status: "within-demo-reference", label: "Reference" });
   });
 
-  it("reads metrics the dataset does not record as Unknown", () => {
-    const readings = dayReadings(DATA, SOFIA, 10).filter((entry) => UNRECORDED.includes(entry.metric.id));
-    expect(readings).toHaveLength(3);
-    for (const entry of readings) {
-      expect(entry.value).toBeNull();
-      expect(entry.formatted).toBe("Unknown");
-      expect(entry.scenario.status).toBe("unknown");
-      expect(entry.scenario.label).toBe("Unknown");
-      expect(entry.scenario.baseline).toBeNull();
-    }
+  it("reads SpO₂, activity, and the stress index from the dataset; a day without exercise reads 0 min", () => {
+    const byId = Object.fromEntries(dayReadings(DATA, SOFIA, 10).map((entry) => [entry.metric.id, entry]));
+    expect(byId.spo2.value).toBe(98);
+    expect(byId.activity.value).toBe(40);
+    expect(byId.stress.value).toBe(150);
+    for (const id of ["spo2", "activity", "stress"]) expect(byId[id].scenario.status).toBe("within-demo-reference");
+    const restDay = dayReadings(DATA, SOFIA, 9).find((entry) => entry.metric.id === "activity")!;
+    expect(restDay.value).toBe(0);
+    expect(readingText(restDay)).toBe("0 min");
   });
 
   it("reads gaps, unknown days, and unknown crew members as Unknown, never NaN or undefined", () => {
@@ -166,8 +166,8 @@ describe("readingText", () => {
     const byId = Object.fromEntries(dayReadings(DATA, SOFIA, 10).map((entry) => [entry.metric.id, entry]));
     expect(readingText(byId.heartRate)).toBe("63 bpm");
     expect(readingText(byId.bloodPressure)).toBe("110/71 mmHg");
-    expect(readingText(byId.spo2)).toBe("Unknown");
-    expect(readingText(byId.stress)).toBe("Unknown");
+    expect(readingText(byId.spo2)).toBe("98 %");
+    expect(readingText(byId.stress)).toBe("150 SI");
   });
 });
 
@@ -205,8 +205,8 @@ describe("daySeries", () => {
     for (const point of [...heartRate, ...pressure]) expect(point.value).not.toBeNull();
   });
 
-  it("is empty for metrics the dataset does not record and for unknown crew or days", () => {
-    for (const metricId of UNRECORDED) expect(daySeries(DATA, "sofia", metricId, 30, 30)).toEqual([]);
+  it("plots activity including days without exercise, and is empty for unknown crew or days", () => {
+    expect(daySeries(DATA, "sofia", "activity", 9, 3).map((point) => point.value)).toEqual([40, 40, 0]);
     expect(daySeries(DATA, "nobody", "heartRate", 30, 7)).toEqual([]);
     expect(daySeries(DATA, "sofia", "heartRate", 0, 7)).toEqual([]);
   });

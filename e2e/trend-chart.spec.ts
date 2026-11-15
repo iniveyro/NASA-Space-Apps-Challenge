@@ -66,20 +66,18 @@ test.describe("trend chart", () => {
     await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(1);
   });
 
-  test("metrics the mission dataset does not record show an empty state instead of a chart", async ({ page }) => {
+  test("activity plots one bar per day, rest days included, and SpO₂ and the stress index plot as lines", async ({ page }) => {
     await page.goto("/astronaut/ines");
-    await expect(page.locator("#trend-chart")).toBeVisible();
-    await expect(page.locator("#chart-empty")).toHaveCount(0);
-    for (const metricId of ["spo2", "activity", "stress"]) {
+    await page.locator("[data-metric='activity']").click();
+    await expect(page.locator("#chart-metric-title")).toHaveText("Activity");
+    await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(30);
+    await page.locator("[data-days='7']").click();
+    await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(7);
+    await page.locator("[data-days='30']").click();
+    for (const metricId of ["spo2", "stress"]) {
       await page.locator(`[data-metric='${metricId}']`).click();
-      await expect(page.locator("#chart-empty")).toHaveText("No readings recorded for this metric in the mission dataset.");
-      await expect(page.locator("#trend-chart")).toHaveCount(0);
-      await page.locator("[data-days='7']").click();
-      await expect(page.locator("#chart-empty")).toBeVisible();
-      await page.locator("[data-days='30']").click();
+      await expect(page.locator("#chart-empty")).toHaveCount(0);
+      await expect(page.locator("#trend-chart [data-point]")).toHaveCount(30);
     }
-    await page.locator("[data-metric='heartRate']").click();
-    await expect(page.locator("#chart-empty")).toHaveCount(0);
-    await expect(page.locator("#trend-chart [data-point]")).toHaveCount(30);
   });
 });

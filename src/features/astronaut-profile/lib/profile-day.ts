@@ -32,13 +32,16 @@ export interface DayReading {
   scenario: MetricScenario;
 }
 
-/** Dataset column behind each single-value metric. SpO₂, activity, and stress are not recorded. */
+/** Dataset column behind each single-value metric. */
 const SERIES_FIELD: Partial<Record<MetricId, CrewSeriesField>> = {
   heartRate: "heartRate",
   temperature: "temperature",
   sleep: "sleep",
   mood: "mood",
   glucose: "glucose",
+  activity: "activity",
+  spo2: "spo2",
+  stress: "stress",
   radiation: "radiation",
 };
 
