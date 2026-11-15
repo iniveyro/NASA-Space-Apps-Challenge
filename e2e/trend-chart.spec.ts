@@ -22,6 +22,7 @@ test.describe("trend chart", () => {
     await page.goto("/astronaut/ines");
     await page.locator("[data-metric='sleep']").click();
     await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(30);
+    await page.getByRole("button", { name: "Close health guidance" }).click();
     await page.locator("[data-metric='mood']").click();
     await expect(page.locator("#trend-chart .chart-line")).toHaveCount(0);
     await expect(page.locator("#trend-chart .chart-mark")).toHaveCount(30);

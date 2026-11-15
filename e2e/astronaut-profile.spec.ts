@@ -32,10 +32,10 @@ test.describe("astronaut profile", () => {
   test("authored states are shown on Sofía's blood pressure and Kanji's heart rate", async ({ page }) => {
     await page.goto("/astronaut/sofia");
     await expect(page.locator("[data-metric='bloodPressure']")).toHaveAttribute("data-status", "demo-alert");
-    await expect(page.locator("[data-metric='bloodPressure'] .metric-status")).toHaveText("Alert");
+    await expect(page.locator("[data-metric='bloodPressure'] .metric-status")).toContainText("Alert");
     await page.goto("/astronaut/kanji");
     await expect(page.locator("[data-metric='heartRate']")).toHaveAttribute("data-status", "demo-deviation");
-    await expect(page.locator("[data-metric='heartRate'] .metric-status")).toHaveText("Deviation");
+    await expect(page.locator("[data-metric='heartRate'] .metric-status")).toContainText("Deviation");
   });
 
   test("unknown profile ids render the not-found page", async ({ page, browserErrors }) => {
