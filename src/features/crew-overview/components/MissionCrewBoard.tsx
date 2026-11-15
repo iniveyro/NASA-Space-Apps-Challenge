@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { PROFILES, eventLabel, eventsOn, readingFor, seriesWindow, type MissionDataset } from "@/features/crew-health-data";
-import { MissionDaySelector, formatMissionDate, phaseLabel } from "@/features/mission-timeline";
-import { SectionHeading } from "@/shared/design-system";
+import { MissionDayProvider, MissionDaySelector, formatMissionDate, phaseLabel } from "@/features/mission-timeline";
+import { SectionHeading, SegmentedToggle } from "@/shared/design-system";
 import { CrewCard, type CrewCardEvent } from "./CrewCard";
 
 function cardEvents(data: MissionDataset, crewId: string, day: number, dailyCode: string | null): CrewCardEvent[] {
@@ -14,18 +14,22 @@ function cardEvents(data: MissionDataset, crewId: string, day: number, dailyCode
   return listed;
 }
 
-/** Mission-day selector plus the crew cards it drives. Defaults to the last mission day. */
-export function MissionCrewBoard({ data }: { data: MissionDataset }) {
-  const total = data.days.length;
-  const [day, setDay] = useState(total);
-  const info = data.days[day - 1];
-  const description = info
-    ? `Simulated readings · Day ${info.day} · ${formatMissionDate(info.date)} · ${phaseLabel(info.phase)}`
-    : "Simulated readings · Day unavailable";
+type HomeView = "crew" | "mission";
 
+const VIEW_OPTIONS = [
+  { value: "crew", label: "Crew health" },
+  { value: "mission", label: "Mission in 3D" },
+] as const;
+
+const VIEW_HINT: Readonly<Record<HomeView, string>> = {
+  crew: "Simulated readings for each crew member on the selected day.",
+  mission: "Where the crew is on the selected day, and how long a signal takes to reach Earth.",
+};
+
+/** The crew cards for one mission day. */
+function CrewGrid({ data, day, description }: { data: MissionDataset; day: number; description: string }) {
   return (
     <>
-      <MissionDaySelector days={data.days} events={data.events} crew={PROFILES} value={day} onChange={setDay} />
       <SectionHeading
         className="mb-4"
         title="Mission crew"
@@ -60,5 +64,34 @@ export function MissionCrewBoard({ data }: { data: MissionDataset }) {
         })}
       </div>
     </>
+  );
+}
+
+/**
+ * Mission-day selector plus what it drives: the crew cards, or the mission view (`mission`) when the visitor
+ * switches to it. Both follow the same day. Defaults to the last mission day and the crew cards.
+ */
+export function MissionCrewBoard({ data, mission }: { data: MissionDataset; mission?: ReactNode }) {
+  const total = data.days.length;
+  const [day, setDay] = useState(total);
+  const [view, setView] = useState<HomeView>("crew");
+  const info = data.days[day - 1];
+  const description = info
+    ? `Simulated readings · Day ${info.day} · ${formatMissionDate(info.date)} · ${phaseLabel(info.phase)}`
+    : "Simulated readings · Day unavailable";
+
+  return (
+    <MissionDayProvider value={{ data, day, onChange: setDay }}>
+      {mission ? (
+        <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <SegmentedToggle label="Screen" options={VIEW_OPTIONS} value={view} onChange={setView} dataKey="home-view" />
+          <p id="home-view-hint" className="m-0 text-caption text-muted">
+            {VIEW_HINT[view]}
+          </p>
+        </div>
+      ) : null}
+      <MissionDaySelector days={data.days} events={data.events} crew={PROFILES} value={day} onChange={setDay} />
+      {mission && view === "mission" ? <div id="home-mission-view">{mission}</div> : <CrewGrid data={data} day={day} description={description} />}
+    </MissionDayProvider>
   );
 }

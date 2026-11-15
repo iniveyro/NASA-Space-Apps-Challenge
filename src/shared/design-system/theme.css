@@ -96,6 +96,16 @@
   --color-body-base: #dce2e8;
   --color-body-highlight: #8da4ba;
 
+  /* 3D scenes (WebGL): materials cannot take classes, so they read these through readToken() */
+  --color-space-void: #0a101c;
+  --color-space-star: #cbd7e8;
+  --color-space-sun: #ffd98a;
+  --color-space-sun-glow: #ff9f38;
+  --color-space-earth: #4f93ea;
+  --color-space-mars: #d2643c;
+  --color-space-orbit: #3b4d66;
+  --color-space-signal: #4fd8c4;
+
   /* Radius */
   --radius-xs: 5px;
   --radius-sm: 7px;

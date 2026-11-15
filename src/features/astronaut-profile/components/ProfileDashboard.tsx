@@ -1,12 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { BodyMap, firstMetricFor } from "@/features/body-map";
-import { getMetric, type BodyRegion, type MetricId, type Profile } from "@/features/crew-health-data";
+import { useMemo, useState } from "react";
+import { BodyMap, firstMetricFor, type RegionSignal } from "@/features/body-map";
+import { METRICS, formatValue, getMetric, latest, resolveMetricScenario, type BodyRegion, type MetricId, type Profile } from "@/features/crew-health-data";
 import { TrendPanel } from "@/features/trend-chart";
 import { SectionHeading } from "@/shared/design-system";
 import { MetricGrid } from "./MetricGrid";
 import { MetricReference } from "./MetricReference";
+
+/** The profile's latest readings with their authored demo states, as the body map displays them. */
+function regionSignals(profileId: string): RegionSignal[] {
+  return METRICS.map((item) => {
+    const value = latest(profileId, item.id);
+    const formatted = formatValue(item.id, value);
+    const scenario = resolveMetricScenario(profileId, item.id, value);
+    return { metricId: item.id, label: item.label, value: formatted === "Unknown" ? formatted : `${formatted} ${item.unit}`, status: scenario.status, statusLabel: scenario.label };
+  });
+}
 
 /**
  * Interactive part of the profile: the selected metric drives the reference, chart, and body map.
@@ -17,6 +27,8 @@ export function ProfileDashboard({ person }: { person: Profile }) {
   const [days, setDays] = useState<7 | 30>(30);
   const [region, setRegion] = useState<BodyRegion | null>(null);
   const metric = getMetric(metricId)!;
+  const signals = useMemo(() => regionSignals(person.id), [person.id]);
+  const heartRate = latest(person.id, "heartRate");
 
   const selectMetric = (id: MetricId) => {
     const next = getMetric(id);
@@ -39,7 +51,12 @@ export function ProfileDashboard({ person }: { person: Profile }) {
         <MetricReference person={person} metric={metric} />
       </section>
       <div className="grid grid-cols-[minmax(300px,.82fr)_minmax(0,1.55fr)] items-start gap-4 max-md:grid-cols-[minmax(0,.9fr)_minmax(0,1.3fr)] max-sm:grid-cols-1">
-        <BodyMap region={region} onSelectRegion={(target) => selectMetric(firstMetricFor(target))} />
+        <BodyMap
+          region={region}
+          onSelectRegion={(target) => selectMetric(firstMetricFor(target))}
+          signals={signals}
+          pulseBpm={typeof heartRate === "number" ? heartRate : null}
+        />
         <TrendPanel person={person} metric={metric} days={days} onDaysChange={setDays} />
       </div>
     </>
