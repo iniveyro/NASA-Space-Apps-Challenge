@@ -23,7 +23,7 @@ The four-card desktop grid compresses each metric tile and its mini chart. The e
 - [x] MCL-1 Remove the oxygen UI and visible “Reference” status label from crew cards without changing underlying data/statuses.
 - [x] MCL-2 Use available desktop width for a two-column crew-card layout and enlarge the mini charts while preserving narrow-screen behavior and the light-gray page style.
 - [x] MCL-3 Add e2e assertions for absent oxygen/reference card UI and for wider responsive mini charts.
-- [ ] MCL-4 Record the work-unit commit identity and close the task.
+- [x] MCL-4 Record the work-unit commit identity and close the task.
 
 ## Checks
 - Baseline: `npm run lint -- --ignore-pattern '.artifacts/**'`, `npm run typecheck`, `npm test`, `npm run build`.
@@ -33,7 +33,7 @@ The four-card desktop grid compresses each metric tile and its mini chart. The e
 ## Progress
 - Baseline scoped lint, typecheck, unit tests, and build passed before source changes. Unscoped lint is known to fail on pre-existing `.artifacts` content; `.artifacts` and lint configuration remain out of scope.
 - Implemented MCL-1–MCL-3 in `CrewCard`, `MissionCrewBoard`, `MetricMiniChart`, and `e2e/crew-overview.spec.ts`; source behavior changes only presentation, not data or statuses.
-- Final verification passed; work-unit commit pending.
+- Final verification passed and the implementation work unit is committed as `f74bd9e`.
 
 ## Verification evidence
 - Baseline scoped lint: pass.
@@ -46,9 +46,10 @@ The four-card desktop grid compresses each metric tile and its mini chart. The e
 - Final production build: pass (`npm run build`).
 - Final e2e: 45 tests passed (`npm run test:e2e`, 58.2s).
 - `git diff --check`: pass.
+- Work-unit commit: `f74bd9e` (`feat(crew-overview): expand medical card mini charts`).
 
 ## Next step
-Create the conventional-commit work unit, then record its identity here and in the Engram mirror.
+No remaining implementation work. The follow-up task-state commit records the work-unit identity.
 
 ## Rollback boundary
 Revert this work-unit commit to restore the current crew-card layout and associated e2e assertions.
