@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { activityLabel, healthLabel, type Profile } from "@/features/crew-health-data";
-import { Avatar, Eyebrow, StatusText } from "@/shared/design-system";
+import type { Profile } from "@/features/crew-health-data";
+import { Avatar, Eyebrow } from "@/shared/design-system";
 
 const demographicCell =
   "min-w-26 border-l border-border px-4.5 py-0.5 max-sm:min-w-0 max-sm:flex-1 max-sm:px-3 max-sm:first:border-l-0 max-sm:first:pl-0 max-sm:last:pr-0 max-xs:px-2";
@@ -42,12 +42,6 @@ export function ProfileHeader({ person }: { person: Profile }) {
               </strong>
             </div>
           ))}
-        </div>
-      </div>
-      <div className="flex items-start justify-between gap-5 pt-4.25 pb-5.25 max-sm:flex-col max-sm:gap-2.5">
-        <div className="flex flex-wrap items-center gap-x-4.5 gap-y-2">
-          <StatusText id="health-status" status={person.health} label={healthLabel(person.health)} />
-          <StatusText id="activity-status" status={person.activity} label={activityLabel(person.activity)} />
         </div>
       </div>
     </>

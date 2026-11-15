@@ -63,6 +63,37 @@ export function MissionDaySelector({ days, events, crew = [], value, onChange }:
       data-comm={info.comm}
       className="mb-7 min-w-0 rounded-xl border border-border bg-surface p-5 max-sm:p-4"
     >
+      <PanelHeading
+        eyebrow={`UMBRAL MISSION TIMELINE · ${total} DAYS`}
+        title="Mission day"
+        titleId="mission-day-title"
+        className="mb-3 flex-wrap"
+        actions={
+          <div className="flex items-center gap-1.5" role="group" aria-label="Step one day">
+            <button
+              type="button"
+              id="mission-day-prev"
+              aria-label="Previous day"
+              disabled={day <= 1}
+              onClick={() => select(day - 1)}
+              className="min-h-8 min-w-8 cursor-pointer rounded-sm border border-border bg-surface-subtle px-2 text-caption font-bold text-text-strong hover:border-hover-border disabled:cursor-not-allowed disabled:text-muted"
+            >
+              ◀
+            </button>
+            <button
+              type="button"
+              id="mission-day-next"
+              aria-label="Next day"
+              disabled={day >= total}
+              onClick={() => select(day + 1)}
+              className="min-h-8 min-w-8 cursor-pointer rounded-sm border border-border bg-surface-subtle px-2 text-caption font-bold text-text-strong hover:border-hover-border disabled:cursor-not-allowed disabled:text-muted"
+            >
+              ▶
+            </button>
+          </div>
+        }
+      />
+
       <p id="mission-day-readout" aria-live="polite" className="mb-3 text-body font-semibold text-text-strong tabular-nums">
         {describeDay(info)}
       </p>
