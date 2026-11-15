@@ -28,15 +28,15 @@ export function MetricMiniChart({ day, metricLabel, metricId, unit, series }: Me
       </span>
     );
   }
-  const paths = buildChartSegments(series);
+  const paths = buildChartSegments(series, 144, 36, 3);
   const details = series
     .map(({ label, values }) => `${label}: ${values.map((value) => (typeof value === "number" && Number.isFinite(value) ? value : "unavailable")).join(", ")} ${unit}`)
     .join("; ");
 
   return (
     <svg
-      className="mini-sparkline h-7 w-[min(94px,55%)] overflow-visible"
-      viewBox="0 0 108 24"
+      className="mini-sparkline w-full aspect-[4/1] max-h-16 overflow-visible"
+      viewBox="0 0 144 36"
       role="img"
       data-mini-chart={metricId}
       aria-label={`Simulated ${metricLabel} readings, days ${startDay}–${day}: ${details}`}

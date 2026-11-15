@@ -40,7 +40,7 @@ function CrewGrid({ data, day, description }: { data: MissionDataset; day: numbe
           </span>
         }
       />
-      <div id="crew-grid" data-selected-day={day} className="grid grid-cols-2 gap-4.5 max-sm:grid-cols-1 lg:grid-cols-4" aria-label="Crew health overview">
+      <div id="crew-grid" data-selected-day={day} className="grid grid-cols-1 gap-4.5 sm:grid-cols-2" aria-label="Crew health overview">
         {PROFILES.map((person) => {
           const reading = readingFor(data, person.id, day);
           return (

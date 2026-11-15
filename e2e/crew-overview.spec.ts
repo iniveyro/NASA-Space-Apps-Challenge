@@ -90,11 +90,14 @@ test.describe("crew overview", () => {
       await expect(current.locator(".crew-name")).toHaveText(person.name);
       await expect(current.getByText("7-day trend", { exact: true })).toHaveCount(0);
       await expect(current.getByText(/^(Stable|Monitoring|Simulated alert|Active|Resting)$/)).toHaveCount(0);
-      await expect(current.locator("[data-metric-readout]:not([data-metric-readout='spo2'])")).toHaveCount(4);
-      await expect(current.locator(".oxygen-value")).toHaveText("Unknown");
+      await expect(current.locator("[data-metric-readout]")).toHaveCount(4);
+      await expect(current.locator("[data-metric-readout='spo2']")).toHaveCount(0);
+      await expect(current).not.toContainText(/reference|SpO₂|oxygen/i);
       await expect(current.locator(".mini-sparkline")).toHaveCount(4);
-      const tiles = current.locator(".vital-tile:not([data-metric-readout='spo2'])");
+      const tiles = current.locator(".vital-tile");
       await expect(tiles).toHaveCount(4);
+      const chartBounds = await current.locator("svg[data-mini-chart]").first().boundingBox();
+      expect(chartBounds?.width).toBeGreaterThan(150);
       const styles = await tiles.evaluateAll((nodes) => nodes.map((node) => ({
         background: getComputedStyle(node).backgroundColor,
         borderWidth: getComputedStyle(node).borderTopWidth,
