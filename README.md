@@ -48,7 +48,7 @@ src/
     crew-overview/          crew cards, heart-rate sparkline, SpO₂ ring
     astronaut-profile/      profile header, metric grid, reference detail, dashboard state
     trend-chart/            SVG history chart and "Wellness trends" panel
-    body-map/               body-highlighter illustration and region selectors
+    body-map/               3D figure with region states (three.js), 2D body-highlighter fallback, region selectors
     mission-orbit/          3D mission geometry (three.js), Earth-link readout, story beats
   shared/
     design-system/          theme.css tokens, status tones, UI primitives
