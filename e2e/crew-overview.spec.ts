@@ -96,8 +96,14 @@ test.describe("crew overview", () => {
       await expect(current.locator(".mini-sparkline")).toHaveCount(4);
       const tiles = current.locator(".vital-tile");
       await expect(tiles).toHaveCount(4);
+      const divider = current.locator("[data-crew-divider]");
+      await expect(divider).toHaveCount(1);
+      await expect(divider).toHaveAttribute("aria-hidden", "true");
+      expect(await divider.evaluate((node) => getComputedStyle(node).borderTopWidth)).toBe("1px");
       const chartBounds = await current.locator("svg[data-mini-chart]").first().boundingBox();
-      expect(chartBounds?.width).toBeGreaterThan(150);
+      const tileBounds = await tiles.first().boundingBox();
+      expect(chartBounds?.width).toBeGreaterThan(50);
+      expect(chartBounds!.width / tileBounds!.width).toBeGreaterThan(0.7);
       const styles = await tiles.evaluateAll((nodes) => nodes.map((node) => ({
         background: getComputedStyle(node).backgroundColor,
         borderWidth: getComputedStyle(node).borderTopWidth,
@@ -131,6 +137,34 @@ test.describe("crew overview", () => {
     }
     await expectCardsMatchDay(page, TOTAL);
     await expectChartsMatchDay(page, TOTAL);
+  });
+
+  test("uses four desktop columns and wraps a fifth card onto the next row", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/");
+    const grid = page.locator("#crew-grid");
+    const layout = await grid.evaluate((element) => {
+      const cards = Array.from(element.querySelectorAll<HTMLElement>(".crew-card"));
+      const first = cards[0].getBoundingClientRect();
+      const columnCount = getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length;
+      const fifth = cards[0].cloneNode(true) as HTMLElement;
+      fifth.dataset.crew = "fifth-card-test";
+      element.append(fifth);
+      const fifthBounds = fifth.getBoundingClientRect();
+      return {
+        cardCount: cards.length,
+        columnCount,
+        firstTop: first.top,
+        firstLeft: first.left,
+        fifthTop: fifthBounds.top,
+        fifthLeft: fifthBounds.left,
+      };
+    });
+
+    expect(layout.cardCount).toBe(4);
+    expect(layout.columnCount).toBe(4);
+    expect(layout.fifthTop).toBeGreaterThan(layout.firstTop);
+    expect(layout.fifthLeft).toBeCloseTo(layout.firstLeft, 0);
   });
 
   test("the range slider, keyboard, and prev/next buttons change the day and every card", async ({ page }) => {

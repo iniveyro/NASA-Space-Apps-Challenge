@@ -106,6 +106,7 @@ export function CrewCard({ person, day, reading, trends, events }: CrewCardProps
             ))}
           </span>
         ) : null}
+        <span aria-hidden="true" data-crew-divider className="my-3 block border-t border-divider" />
         <span className="m-0 grid grid-cols-2 gap-3" role="list">
           {VITALS.map((metricId) => (
             <VitalTile key={metricId} person={person} day={day} reading={reading} metricId={metricId} trends={trends} />
