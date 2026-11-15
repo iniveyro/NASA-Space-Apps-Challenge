@@ -1,22 +1,11 @@
-/**
- * three.js building blocks for the mission scene. Client only: they read design tokens from the
- * document and draw small textures on a 2D canvas.
- */
-import { BufferAttribute, BufferGeometry, CanvasTexture, Color, SRGBColorSpace, Vector3, type InterleavedBufferAttribute } from "three";
+/** three.js building blocks for the mission scene: daily tracks, fat lines, the star field and particle streams. */
+import { BufferAttribute, BufferGeometry, Vector3, type Color, type InterleavedBufferAttribute } from "three";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
-import { readToken } from "@/shared/design-system";
+import { seededRandom } from "@/shared/scene/random";
 import type { MissionGeometry, Vec3 } from "../../lib/geometry";
 import { toScene } from "../../lib/scene-math";
-
-/** Reads a design token as a three.js color. Unknown tokens resolve to white instead of throwing. */
-export function tokenColor(name: string): Color {
-  const color = new Color();
-  const value = readToken(name);
-  if (value) color.set(value);
-  return color;
-}
 
 export interface SceneTracks {
   total: number;
@@ -94,60 +83,6 @@ export function setSegment(line: Line2, from: Vector3, to: Vector3): void {
 export function disposeLine(line: Line2): void {
   line.geometry.dispose();
   line.material.dispose();
-}
-
-function cssColor(color: Color, alpha: number): string {
-  const [r, g, b] = [color.r, color.g, color.b].map((channel) => Math.round(Math.min(1, Math.max(0, channel)) * 255));
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function canvasTexture(size: number, draw: (context: CanvasRenderingContext2D, size: number) => void): CanvasTexture {
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const context = canvas.getContext("2d");
-  if (context) draw(context, size);
-  const texture = new CanvasTexture(canvas);
-  texture.colorSpace = SRGBColorSpace;
-  return texture;
-}
-
-/** Soft radial falloff from `inner` to transparent `outer`: the Sun's glow and the signal pulses. */
-export function glowTexture(inner: Color, outer: Color, core = 0.12): CanvasTexture {
-  // Colors are stored in the linear working space; convert back to sRGB for the 2D canvas.
-  const innerSrgb = inner.clone().convertLinearToSRGB();
-  const outerSrgb = outer.clone().convertLinearToSRGB();
-  return canvasTexture(128, (context, size) => {
-    const half = size / 2;
-    const gradient = context.createRadialGradient(half, half, 0, half, half, half);
-    gradient.addColorStop(0, cssColor(innerSrgb, 1));
-    gradient.addColorStop(core, cssColor(innerSrgb, 0.95));
-    gradient.addColorStop(Math.min(0.5, core + 0.22), cssColor(outerSrgb, 0.32));
-    gradient.addColorStop(1, cssColor(outerSrgb, 0));
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, size, size);
-  });
-}
-
-/** White ring used as a constant-size marker around the crew's position; tint it with the material color. */
-export function ringTexture(): CanvasTexture {
-  return canvasTexture(128, (context, size) => {
-    const half = size / 2;
-    context.lineWidth = size * 0.09;
-    context.strokeStyle = cssColor(new Color(1, 1, 1), 1);
-    context.beginPath();
-    context.arc(half, half, half * 0.8, 0, Math.PI * 2);
-    context.stroke();
-  });
-}
-
-/** Small deterministic generator (0–1), so the sky and the particles are identical on every visit. */
-function seededRandom(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (state * 1664525 + 1013904223) >>> 0;
-    return state / 4294967296;
-  };
 }
 
 /** Per-particle constants of a particle stream: phase (0–1), two offsets inside the unit disc, and a speed factor. */

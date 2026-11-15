@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Component, useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState } from "react";
 import { toneDot, toneFor } from "@/shared/design-system";
 import { cn } from "@/shared/lib/cn";
+import { SceneBoundary } from "@/shared/scene/SceneBoundary";
+import { useOnScreen } from "@/shared/scene/use-on-screen";
 import { formatDelay } from "../lib/format";
 import { SOLAR_EXCLUSION_DEG, delayMinutes, linkOutlook, nearConjunction, type MissionGeometry } from "../lib/geometry";
 import { PULSE_SECONDS_PER_MINUTE, type CameraView } from "../lib/scene-math";
@@ -19,22 +21,6 @@ const LEG_SWATCH: Readonly<Record<TrajectoryLeg["id"], string>> = {
   surface: "bg-chart-secondary",
   return: "bg-chart-bar",
 };
-
-class SceneBoundary extends Component<{ onError: () => void; children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  componentDidCatch() {
-    this.props.onError();
-  }
-
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
-}
 
 interface OrbitViewportProps {
   geometry: MissionGeometry;
@@ -57,17 +43,9 @@ const chip = "m-0 inline-flex max-w-full items-center gap-2 rounded-sm border bo
 /** The dark "screen": 2D diagram underneath, the WebGL scene on top once its first frame is drawn. */
 export function OrbitViewport({ geometry, day, mode, sceneKey, view, viewNonce, reducedMotion, storm, onSlow, onUnavailable }: OrbitViewportProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [onScreen, setOnScreen] = useState(true);
+  const onScreen = useOnScreen(containerRef);
   const [readyKey, setReadyKey] = useState<number | null>(null);
   const sceneReady = mode === "3d" && readyKey === sceneKey;
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting), { rootMargin: "120px" });
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
 
   const comm = geometry.comm[day - 1] ?? "unknown";
   const delay = delayMinutes(geometry, day);

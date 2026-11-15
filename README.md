@@ -52,7 +52,8 @@ src/
     mission-orbit/          3D mission geometry (three.js), Earth-link readout, story beats
   shared/
     design-system/          theme.css tokens, status tones, UI primitives
-    lib/                    cn(), date formatting
+    lib/                    cn(), date formatting, reduced-motion and WebGL support hooks
+    scene/                  three.js helpers: token colors, glow textures, error boundary, on-screen hook
 e2e/                        Playwright specs, one per feature
 docs/design-system.md       tokens, primitives, do/don't
 ```

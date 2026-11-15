@@ -27,24 +27,12 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Line2 } from "three/examples/jsm/lines/Line2.js";
+import { glowTexture, ringTexture } from "@/shared/scene/textures";
+import { tokenColor } from "@/shared/scene/tokens";
 import { SOLAR_EXCLUSION_DEG, delayMinutes, nearConjunction, type MissionGeometry } from "../../lib/geometry";
 import { BODY_RADIUS, SCENE_UNITS_PER_AU, cameraFrame, pulseProgress, pulseTravelSeconds, type CameraView } from "../../lib/scene-math";
 import { TRAJECTORY_LEGS } from "../../lib/trajectory";
-import {
-  STREAM_SEED_SIZE,
-  buildTracks,
-  fatLine,
-  glowTexture,
-  orbitGeometry,
-  ringTexture,
-  sampleTrack,
-  setSegment,
-  starGeometry,
-  streamGeometry,
-  streamSeeds,
-  tokenColor,
-  type SceneTracks,
-} from "./scene-kit";
+import { STREAM_SEED_SIZE, buildTracks, fatLine, orbitGeometry, sampleTrack, setSegment, starGeometry, streamGeometry, streamSeeds, type SceneTracks } from "./scene-kit";
 
 export type SceneLabel = "sun" | "earth" | "mars" | "crew" | "link";
 export const SCENE_LABELS: readonly SceneLabel[] = ["sun", "earth", "mars", "crew", "link"];
