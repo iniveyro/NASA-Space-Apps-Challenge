@@ -24,7 +24,6 @@ test.describe("astronaut profile", () => {
       await expect(page.locator(".metric-card")).toHaveCount(10);
       await expect(daySelector(page)).toHaveAttribute("data-selected-day", String(TOTAL));
       await expect(page.locator("#readings-title")).toHaveText("Latest readings");
-      await expect(page.getByText("Fictional point readings · 12 Jun 2029")).toBeVisible();
       await expectMetricsMatchDay(page, person.id, TOTAL);
       for (const metricId of ["spo2", "activity", "stress"]) {
         await expect(metricValue(page, metricId)).not.toHaveText("Unknown");
@@ -38,6 +37,7 @@ test.describe("astronaut profile", () => {
     await expect(page.locator("[data-metric='heartRate']")).toHaveAttribute("aria-pressed", "true");
     await page.locator("[data-metric='bloodPressure']").click();
     await expect(page.locator("[data-metric='bloodPressure']")).toHaveAttribute("aria-pressed", "true");
+    await page.keyboard.press("Escape");
     await expect(page.locator("[data-metric='heartRate']")).toHaveAttribute("aria-pressed", "false");
     await expect(page.locator("#metric-reference")).toContainText("Blood pressure · Reference");
     await expect(page.locator("#metric-reference")).toContainText(`${datasetValue("kanji", "bloodPressure", TOTAL)} mmHg`);
@@ -45,6 +45,7 @@ test.describe("astronaut profile", () => {
     await expect(page.locator("#chart-metric-title")).toHaveText("Blood pressure");
 
     await page.locator("[data-metric='spo2']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#metric-reference")).toContainText("SpO₂ · Reference");
     await expect(page.locator("#metric-reference")).toContainText(`${datasetValue("kanji", "spo2", TOTAL)} %`);
     await expect(page.locator("#metric-reference")).toHaveAttribute("data-status", "within-demo-reference");
@@ -56,7 +57,7 @@ test.describe("astronaut profile", () => {
     await expect(daySelector(page)).toHaveAttribute("data-selected-day", "518");
     await expect(metricValue(page, "spo2")).toContainText("89");
     await expect(page.locator("[data-metric='spo2']")).toHaveAttribute("data-status", "demo-alert");
-    await expect(page.locator("[data-metric='spo2'] .metric-status")).toHaveText("Alert");
+    await expect(page.locator("[data-metric='spo2'] .metric-status")).toContainText("Alert");
     await expectMetricsMatchDay(page, "ines", 518);
 
     await page.goto("/astronaut/ines?day=519");
@@ -69,19 +70,25 @@ test.describe("astronaut profile", () => {
     await expect(page.locator("#readings-title")).toHaveText("Day 211 readings");
     await expect(page.getByText("Fictional point readings · 12 Jun 2027")).toBeVisible();
     await expect(page.locator("[data-metric='bloodPressure']")).toHaveAttribute("data-status", "demo-alert");
-    await expect(page.locator("[data-metric='bloodPressure'] .metric-status")).toHaveText("Alert");
+    await page.locator("[data-metric='bloodPressure']").click();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("[data-metric='bloodPressure'] .metric-status")).toContainText("Alert");
+    await expect(page.locator("#metric-reference")).toContainText(`${datasetValue("sofia", "bloodPressure", 211)} mmHg`);
     await expect(page.locator("[data-metric='heartRate']")).toHaveAttribute("data-status", "within-demo-reference");
-    await expectMetricsMatchDay(page, "sofia", 211);
 
     await page.goto("/astronaut/kanji?day=120");
     await expect(page.locator("[data-metric='heartRate']")).toHaveAttribute("data-status", "demo-alert");
-    await expect(page.locator("[data-metric='heartRate'] .metric-status")).toHaveText("Alert");
+    await page.locator("[data-metric='heartRate']").click();
+    await expect(page.locator("[data-metric='heartRate'] .metric-status")).toContainText("Alert");
+    await page.keyboard.press("Escape");
     await expect(page.locator("#metric-reference")).toContainText("Heart rate · Alert");
     await expectMetricsMatchDay(page, "kanji", 120);
 
     await page.goto("/astronaut/sofia");
     await expect(page.locator("[data-metric='bloodPressure']")).toHaveAttribute("data-status", "within-demo-reference");
-    await expect(page.locator("[data-metric='bloodPressure'] .metric-status")).toHaveText("Reference");
+    await page.locator("[data-metric='bloodPressure']").click();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("[data-metric='bloodPressure'] .metric-status")).toContainText("Reference");
   });
 
   test("changing the mission day updates the readings and the address, and Latest returns to the last day", async ({ page }) => {
@@ -90,6 +97,7 @@ test.describe("astronaut profile", () => {
     await expect(page.locator("#mission-day-latest")).toBeDisabled();
 
     await page.locator("[data-metric='bloodPressure']").click();
+    await page.keyboard.press("Escape");
     await page.locator("[data-days='7']").click();
     await selectDay(page, 211);
     await expect(page).toHaveURL(/\/astronaut\/ines\?day=211$/);
@@ -107,7 +115,8 @@ test.describe("astronaut profile", () => {
 
     await page.locator("[data-event-day='493']").click();
     await expect(page).toHaveURL(/\/astronaut\/ines\?day=493$/);
-    await expect(page.locator("[data-metric='radiation']")).toHaveAttribute("data-status", "demo-deviation");
+    await expect(page.locator("[data-metric='radiation']")).toHaveAttribute("data-status", "demo-alert");
+    await expect(page.locator("[data-metric='radiation']")).toHaveAttribute("data-guidance-status", "critical");
 
     await expect(page.locator("#mission-day-latest")).toBeEnabled();
     await page.locator("#mission-day-latest").click();

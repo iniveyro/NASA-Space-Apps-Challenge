@@ -18,6 +18,7 @@ test.describe("trend chart", () => {
   test("blood pressure keeps systolic and diastolic as separate series", async ({ page }) => {
     await page.goto("/astronaut/ines");
     await page.locator("[data-metric='bloodPressure']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#trend-chart .chart-line")).toHaveCount(2);
     await expect(page.locator("#chart-legend")).toHaveText(/Systolic\s*Diastolic/);
   });
@@ -25,8 +26,10 @@ test.describe("trend chart", () => {
   test("bar and category metrics render their own mark types", async ({ page }) => {
     await page.goto("/astronaut/ines");
     await page.locator("[data-metric='sleep']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(30);
     await page.locator("[data-metric='mood']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#trend-chart .chart-line")).toHaveCount(0);
     await expect(page.locator("#trend-chart .chart-mark")).toHaveCount(30);
   });
@@ -61,14 +64,17 @@ test.describe("trend chart", () => {
     await page.goto("/astronaut/ines?day=1");
     await expect(page.locator("#trend-chart [data-point]")).toHaveCount(1);
     await page.locator("[data-metric='bloodPressure']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#trend-chart .chart-mark")).toHaveCount(2);
     await page.locator("[data-metric='sleep']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(1);
   });
 
   test("activity plots one bar per day, rest days included, and SpO₂ and the stress index plot as lines", async ({ page }) => {
     await page.goto("/astronaut/ines");
     await page.locator("[data-metric='activity']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#chart-metric-title")).toHaveText("Activity");
     await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(30);
     await page.locator("[data-days='7']").click();
@@ -76,6 +82,7 @@ test.describe("trend chart", () => {
     await page.locator("[data-days='30']").click();
     for (const metricId of ["spo2", "stress"]) {
       await page.locator(`[data-metric='${metricId}']`).click();
+      await page.keyboard.press("Escape");
       await expect(page.locator("#chart-empty")).toHaveCount(0);
       await expect(page.locator("#trend-chart [data-point]")).toHaveCount(30);
     }

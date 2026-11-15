@@ -25,9 +25,11 @@ test.describe("body map", () => {
   test("selecting a metric highlights its region", async ({ page }) => {
     await page.goto("/astronaut/kanji");
     await page.locator("[data-metric='mood']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("[data-region='brain']")).toHaveAttribute("aria-pressed", "true");
     // A metric the mission dataset does not record still navigates to its region.
     await page.locator("[data-metric='spo2']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("[data-region='body']")).toHaveAttribute("aria-pressed", "true");
   });
 
