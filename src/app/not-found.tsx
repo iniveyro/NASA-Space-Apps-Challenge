@@ -4,7 +4,7 @@ import { Eyebrow, PageFooter } from "@/shared/design-system";
 export default function NotFound() {
   return (
     <section className="pt-9" aria-labelledby="not-found-title">
-      <Eyebrow>ASTRA HEALTH</Eyebrow>
+      <Eyebrow>ASTRO HEALTH</Eyebrow>
       <h1 id="not-found-title" className="mb-1.75">
         Profile not found
       </h1>

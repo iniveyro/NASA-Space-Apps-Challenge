@@ -6,9 +6,9 @@ NASA Space Apps Challenge 2026 · AstroHealth: astronaut health self-monitoring,
 
 Data and scripts for the demo are in `data/` and `scripts/`. See [data/README.md](data/README.md) for the file list, sources, assumptions and how to rebuild.
 
-## ASTRA Health
+## ASTRO Health
 
-ASTRA Health is a fictional astronaut wellness dashboard with a crew overview and individual profiles. It is an interface prototype, not telemetry or medical guidance.
+ASTRO Health is a fictional astronaut wellness dashboard with a crew overview and individual profiles. It is an interface prototype, not telemetry or medical guidance.
 
 Built with Next.js 16 (App Router), React 19, TypeScript, and Tailwind CSS v4. Deployed on Vercel.
 

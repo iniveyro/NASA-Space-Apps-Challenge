@@ -1,4 +1,4 @@
-# ASTRA Health design system
+# ASTRO Health design system
 
 One visual language for every feature. Tokens live in `src/shared/design-system/theme.css`; primitives in `src/shared/design-system/ui/`; everything is exported from `@/shared/design-system`.
 
@@ -74,7 +74,7 @@ Canvas and WebGL materials cannot take classes: read the color with `readToken(t
 
 | Component | Use for |
 | --- | --- |
-| `SiteHeader` | Global header (already in `layout.tsx`) |
+| `SiteHeader` | Global header (already in `layout.tsx`); inline A/orbit/heartbeat mark, ASTRO Health wordmark, and UMBRAL mission wordmark |
 | `PageFooter` | Footer at the end of every view |
 | `Panel` | White bordered card (`<article>`) |
 | `PanelHeading` | Eyebrow + h2 + optional actions inside a panel |

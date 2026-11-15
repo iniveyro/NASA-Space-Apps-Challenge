@@ -76,7 +76,7 @@ Current features: `crew-health-data` (fictional data + domain logic, UMBRAL miss
    import type { Metadata } from "next";
    import { RadiationTimeline } from "@/features/radiation-timeline";
 
-   export const metadata: Metadata = { title: "Radiation" }; // renders "ASTRA Health · Radiation"
+   export const metadata: Metadata = { title: "Radiation" }; // renders "ASTRO Health · Radiation"
 
    export default function RadiationPage() {
      return <RadiationTimeline />;

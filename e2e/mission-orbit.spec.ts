@@ -35,7 +35,7 @@ async function expectReadoutMatchesDataset(page: Page, day: number) {
 test.describe("mission geometry", () => {
   test("opens on day 1 and follows the dataset as the day changes", async ({ page }) => {
     await page.goto("/mission");
-    await expect(page).toHaveTitle("ASTRA Health · Mission geometry");
+    await expect(page).toHaveTitle("ASTRO Health · Mission geometry");
     await expect(page.getByRole("heading", { level: 1, name: "Mission geometry" })).toBeVisible();
     await expect(board(page)).toHaveAttribute("data-selected-day", "1");
     await expect(page.locator("#story-panel")).toHaveAttribute("data-beat", "departure");

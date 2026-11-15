@@ -1,4 +1,4 @@
-# ASTRA Health visual prototype
+# ASTRO Health visual prototype
 
 ## Objective
 Provide a local, English-language fictional astronaut health dashboard with a crew-wide overview and individual detail views.

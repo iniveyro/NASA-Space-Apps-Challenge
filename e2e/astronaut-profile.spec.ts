@@ -20,6 +20,7 @@ test.describe("astronaut profile", () => {
       await expect(page.locator("#profile-age")).toHaveText(`${person.age} years`);
       await expect(page.locator("#profile-weight")).toHaveText(`${person.weightKg} kg`);
       await expect(page.locator("#profile-sex")).toHaveText(person.sex);
+      await expect(page.locator("#health-status, #activity-status")).toHaveCount(0);
       await expect(page.locator(".metric-card")).toHaveCount(10);
       await expect(daySelector(page)).toHaveAttribute("data-selected-day", String(TOTAL));
       await expect(page.locator("#readings-title")).toHaveText("Latest readings");
