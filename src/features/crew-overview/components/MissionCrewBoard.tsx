@@ -21,11 +21,6 @@ const VIEW_OPTIONS = [
   { value: "mission", label: "Mission in 3D" },
 ] as const;
 
-const VIEW_HINT: Readonly<Record<HomeView, string>> = {
-  crew: "Simulated readings for each crew member on the selected day.",
-  mission: "Where the crew is on the selected day, and how long a signal takes to reach Earth.",
-};
-
 /** The crew cards for one mission day. */
 function CrewGrid({ data, day, description }: { data: MissionDataset; day: number; description: string }) {
   return (
@@ -77,9 +72,6 @@ export function MissionCrewBoard({ data, mission }: { data: MissionDataset; miss
       {mission ? (
         <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2">
           <SegmentedToggle label="Screen" options={VIEW_OPTIONS} value={view} onChange={setView} dataKey="home-view" />
-          <p id="home-view-hint" className="m-0 text-caption text-muted">
-            {VIEW_HINT[view]}
-          </p>
         </div>
       ) : null}
       <MissionDaySelector days={data.days} events={data.events} crew={PROFILES} value={day} onChange={setDay} />

@@ -67,7 +67,7 @@ test.describe("crew overview", () => {
     await expectCardsMatchDay(page, TOTAL);
   });
 
-  test("the range slider, keyboard, and prev/next buttons change the day and every card", async ({ page }) => {
+  test("the keyboard slider and prev/next buttons change the day and every card", async ({ page }) => {
     await page.goto("/");
     await selectDay(page, 211);
     await expect(selector(page)).toHaveAttribute("data-phase", "mars_arrival");
@@ -135,6 +135,15 @@ test.describe("crew overview", () => {
       await expect(page.locator(`[data-phase-milestone='${phase}']`)).toHaveCount(1);
     }
     await expect(page.locator("[data-blackout]")).toHaveCount(1);
+    const labels = { transit_out: "Transit out", surface: "Mars surface", transit_return: "Transit return" };
+    for (const [phase, label] of Object.entries(labels)) {
+      await expect(page.locator(`[data-phase-label='${phase}']`)).toHaveText(label);
+      const glow = (await page.locator(`[data-phase-label='${phase}']`).boundingBox())!;
+      const fill = (await page.locator(`[data-phase-segment='${phase}']`).boundingBox())!;
+      expect(glow.y + glow.height).toBeLessThanOrEqual(fill.y + 1);
+      expect(Math.abs(glow.x - fill.x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(glow.width - fill.width)).toBeLessThanOrEqual(1);
+    }
     const colors = await page
       .locator("[data-phase-segment='transit_out'], [data-phase-segment='surface'], [data-phase-segment='transit_return'], [data-phase-milestone='mars_arrival']")
       .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).backgroundColor));
@@ -153,6 +162,22 @@ test.describe("crew overview", () => {
     const selected = Number(await selector(page).getAttribute("data-selected-day"));
     expect(Math.abs(selected - Math.floor(0.9 * TOTAL) - 1)).toBeLessThanOrEqual(1);
     await expectCardsMatchDay(page, selected);
+  });
+
+  test("the day steppers flank the phase band, which replaces the visible slider and its date labels", async ({ page }) => {
+    await page.goto("/");
+    const band = (await page.locator("#mission-phase-band").boundingBox())!;
+    const prev = (await page.locator("#mission-day-prev").boundingBox())!;
+    const next = (await page.locator("#mission-day-next").boundingBox())!;
+    expect(prev.x + prev.width).toBeLessThanOrEqual(band.x);
+    expect(next.x).toBeGreaterThanOrEqual(band.x + band.width);
+    for (const button of [prev, next]) {
+      expect(button.y).toBeGreaterThanOrEqual(band.y);
+      expect(button.y + button.height).toBeLessThanOrEqual(band.y + band.height + 1);
+    }
+    const range = (await page.locator("#mission-day-range").boundingBox())!;
+    expect(range.width).toBeLessThanOrEqual(1);
+    await expect(selector(page).getByText(/^Day 1 · /)).toHaveCount(0);
   });
 
   test("has no horizontal overflow on a narrow screen after selecting a day", async ({ page }) => {

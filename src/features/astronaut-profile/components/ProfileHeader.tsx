@@ -25,7 +25,6 @@ export function ProfileHeader({ person }: { person: Profile }) {
         <div className="flex min-w-0 items-center gap-4 max-xs:gap-2.75">
           <Avatar id="profile-avatar" initials={person.initials} size="lg" className="avatar" />
           <div>
-            <Eyebrow className="mb-1">ASTRONAUT PROFILE · SIMULATED</Eyebrow>
             <h1 id="detail-title" tabIndex={-1} className="mb-0.75 max-xs:text-display-sm">
               {person.name}
             </h1>
