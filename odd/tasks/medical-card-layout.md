@@ -26,7 +26,7 @@ The four-card desktop grid compresses each metric tile and its mini chart. The e
 - [x] MCL-4 Record the work-unit commit identity and close the task.
 - [x] MCL-5 Add a subtle divider between each astronaut header/events and its metric tiles, preserving the light-gray style.
 - [x] MCL-6 Restore four crew cards per desktop row; verify a fifth card wraps to a second row and mini charts remain useful at the narrower tile width.
-- [ ] MCL-7 Run final checks and record the follow-up work-unit commit.
+- [x] MCL-7 Run final checks and record the follow-up work-unit commit.
 
 ## Follow-up request
 - The user explicitly replaced the two-column desktop layout in MCL-2 with four cards per desktop row; retain its chart-sizing outcome and all other completed requirements.
@@ -61,10 +61,10 @@ The four-card desktop grid compresses each metric tile and its mini chart. The e
 - Follow-up focused crew-overview e2e: 7 tests passed (`npm run test:e2e -- e2e/crew-overview.spec.ts`).
 - Follow-up full e2e: 46 tests passed (`npm run test:e2e`, 54.6s).
 - Follow-up `git diff --check`: pass before commit.
-- Follow-up work-unit commit pending.
+- Follow-up work-unit commit: `5f562d9` (`feat(crew-overview): restore four-card desktop layout`).
 
 ## Next step
-Record the follow-up work-unit commit identity and mirror the completed task state.
+No remaining implementation work. The follow-up task-state commit records this result.
 
 ## Rollback boundary
 Revert this work-unit commit to restore the current crew-card layout and associated e2e assertions.
