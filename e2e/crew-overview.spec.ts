@@ -19,9 +19,28 @@ const csv = (name: string) => readFileSync(path.join(process.cwd(), "data", "pro
 const DATA = buildMissionDataset(parseTimeline(csv("mission_timeline.csv")), parseCrewDaily(csv("crew_daily.csv")), parseEvents(csv("crew_events.csv")));
 const TOTAL = DATA.days.length;
 const VITALS: MetricId[] = ["heartRate", "bloodPressure", "temperature", "radiation"];
+const TRENDS = [
+  { id: "heartRate", label: "heart rate", fields: ["heartRate"], unit: "bpm" },
+  { id: "bloodPressure", label: "blood pressure", fields: ["systolic", "diastolic"], unit: "mmHg" },
+  { id: "temperature", label: "temperature", fields: ["temperature"], unit: "°C" },
+  { id: "radiation", label: "cumulative radiation", fields: ["radiation"], unit: "mSv" },
+] as const;
 
 const selector = (page: Page) => page.locator("#mission-day-selector");
 const card = (page: Page, crewId: string) => page.locator(`.crew-card[data-crew='${crewId}']`);
+
+function contrastRatio(first: string, second: string) {
+  const luminance = (color: string) => {
+    const channels = color.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
+    const linear = channels.map((channel) => {
+      const value = channel / 255;
+      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  };
+  const [lighter, darker] = [luminance(first), luminance(second)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
 
 /** Range fill is idempotent, so retrying it until React applies it also waits for hydration. */
 async function selectDay(page: Page, day: number) {
@@ -36,6 +55,19 @@ async function expectCardsMatchDay(page: Page, day: number) {
     const reading = readingFor(DATA, person.id, day);
     for (const metricId of VITALS) {
       await expect(card(page, person.id).locator(`[data-metric-readout='${metricId}'] .vital-value`)).toContainText(formatValue(metricId, metricReading(reading, metricId)));
+    }
+  }
+}
+
+async function expectChartsMatchDay(page: Page, day: number) {
+  for (const person of PROFILES) {
+    const crewCard = card(page, person.id);
+    for (const { id, label, fields, unit } of TRENDS) {
+      const expected = fields
+        .map((field) => `${field === "systolic" || field === "diastolic" ? field : id === "radiation" ? "cumulative dose" : label}: ${seriesWindow(DATA, person.id, field, day, 7).map((value) => value ?? "unavailable").join(", ")} ${unit}`)
+        .join("; ");
+      const chart = crewCard.locator(`[data-mini-chart='${id}']`);
+      await expect(chart).toHaveAttribute("aria-label", `Simulated ${label} readings, days ${Math.max(1, day - 6)}–${day}: ${expected}`);
     }
   }
 }
@@ -56,15 +88,46 @@ test.describe("crew overview", () => {
     for (const [index, person] of PROFILES.entries()) {
       const current = cards.nth(index);
       await expect(current.locator(".crew-name")).toHaveText(person.name);
+      await expect(current.getByText("7-day trend", { exact: true })).toHaveCount(0);
+      await expect(current.getByText(/^(Stable|Monitoring|Simulated alert|Active|Resting)$/)).toHaveCount(0);
       await expect(current.locator("[data-metric-readout]:not([data-metric-readout='spo2'])")).toHaveCount(4);
       await expect(current.locator(".oxygen-value")).toHaveText("Unknown");
-      const week = seriesWindow(DATA, person.id, "heartRate", TOTAL, 7);
-      await expect(current.locator(".mini-sparkline")).toHaveAttribute(
-        "aria-label",
-        `Simulated heart-rate readings, days ${TOTAL - 6}–${TOTAL}: ${week.join(", ")} beats per minute`,
-      );
+      await expect(current.locator(".mini-sparkline")).toHaveCount(4);
+      const tiles = current.locator(".vital-tile:not([data-metric-readout='spo2'])");
+      await expect(tiles).toHaveCount(4);
+      const styles = await tiles.evaluateAll((nodes) => nodes.map((node) => ({
+        background: getComputedStyle(node).backgroundColor,
+        borderWidth: getComputedStyle(node).borderTopWidth,
+        borderColor: getComputedStyle(node).borderTopColor,
+      })));
+      expect(styles.every(({ background, borderWidth, borderColor }) => background !== "rgba(0, 0, 0, 0)" && borderWidth === "2px" && borderColor !== "rgba(0, 0, 0, 0)")).toBe(true);
+      const graphics = await tiles.evaluateAll((nodes) => nodes.flatMap((node) => {
+        const background = getComputedStyle(node).backgroundColor;
+        return [
+          ...Array.from(node.querySelectorAll("svg[data-mini-chart] path"), (path) => ({ background, paint: getComputedStyle(path).stroke })),
+          ...Array.from(node.querySelectorAll("svg[data-mini-chart] circle"), (circle) => ({ background, paint: getComputedStyle(circle).fill })),
+        ];
+      }));
+      expect(graphics.length).toBeGreaterThan(0);
+      expect(graphics.every(({ background, paint }) => contrastRatio(background, paint) >= 3)).toBe(true);
+      const statusBackgrounds = await page.evaluate(() => {
+        const probe = document.createElement("span");
+        document.body.append(probe);
+        const backgrounds = ["ok", "warn", "alert", "unknown"].map((tone) => {
+          probe.className = `bg-status-${tone}-surface`;
+          return getComputedStyle(probe).backgroundColor;
+        });
+        probe.remove();
+        return backgrounds;
+      });
+      expect(statusBackgrounds.every((background) => graphics.every(({ paint }) => contrastRatio(background, paint) >= 3))).toBe(true);
+      const bpLines = current.locator("[data-metric-readout='bloodPressure'] svg[data-mini-chart] path");
+      const dashPatterns = await bpLines.evaluateAll((paths) => paths.map((path) => getComputedStyle(path).strokeDasharray));
+      expect(dashPatterns.length).toBeGreaterThanOrEqual(2);
+      expect(dashPatterns.some((pattern) => pattern !== "none")).toBe(true);
     }
     await expectCardsMatchDay(page, TOTAL);
+    await expectChartsMatchDay(page, TOTAL);
   });
 
   test("the range slider, keyboard, and prev/next buttons change the day and every card", async ({ page }) => {
@@ -73,6 +136,7 @@ test.describe("crew overview", () => {
     await expect(selector(page)).toHaveAttribute("data-phase", "mars_arrival");
     await expect(page.locator("#mission-day-readout")).toHaveText("Day 211 · 12 Jun 2027 · Mars arrival · Link");
     await expectCardsMatchDay(page, 211);
+    await expectChartsMatchDay(page, 211);
     await expect(card(page, "sofia").locator("[data-metric-readout='bloodPressure']")).toHaveAttribute("data-status", "demo-alert");
     await expect(card(page, "sofia").locator("[data-metric-readout='bloodPressure'] .metric-status")).toHaveText("Alert");
     await expect(card(page, "malik").locator("[data-metric-readout='bloodPressure']")).toHaveAttribute("data-status", "within-demo-reference");
@@ -97,7 +161,14 @@ test.describe("crew overview", () => {
 
     await selectDay(page, 1);
     await expect(page.locator("#mission-day-prev")).toBeDisabled();
-    await expect(card(page, "ines").locator(".mini-sparkline-unavailable")).toHaveCount(1);
+    const firstDayHeartRate = seriesWindow(DATA, "ines", "heartRate", 1, 7);
+    const firstDayChart = card(page, "ines").locator("[data-mini-chart='heartRate']");
+    if (firstDayHeartRate.some((value) => typeof value === "number" && Number.isFinite(value))) {
+      await expect(firstDayChart).toHaveAttribute("aria-label", `Simulated heart rate readings, days 1–1: heart rate: ${firstDayHeartRate[0]} bpm`);
+      await expect(firstDayChart.locator("circle")).toHaveCount(1);
+    } else {
+      await expect(firstDayChart).toHaveClass(/mini-sparkline-unavailable/);
+    }
   });
 
   test("event markers jump to scenario days and show authored states", async ({ page }) => {
