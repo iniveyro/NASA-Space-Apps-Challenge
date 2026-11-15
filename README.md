@@ -25,6 +25,7 @@ Routes:
 
 - `/` — crew overview. Each card links to its profile.
 - `/astronaut/<id>` — profile (`ines`, `kanji`, `malik`, `sofia`). The four profiles are prerendered at build time; unknown ids show a not-found page.
+- `/` — crew overview; the **Crew health / Mission in 3D** switch shows the same mission view in place, driven by the one mission-day selector, so nothing needs a second page.
 - `/mission` — mission geometry: 3D view of the Sun, Earth, Mars and the crew on each mission day, the Earth-link delay, and the story beats. `?day=<n>` opens a given day. Falls back to a 2D diagram without WebGL.
 
 ### Scripts
