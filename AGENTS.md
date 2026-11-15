@@ -46,7 +46,7 @@ Read this before writing code on a new branch. It tells you where your work goes
 | `AGENTS.md`, `CLAUDE.md`, `docs/**`, `README.md` | `chore/*`, or append-only notes from a feature PR |
 | `data/**`, `scripts/**` (Python mission data) | Data owners only; the web app does not read them yet |
 
-Current features: `crew-health-data` (fictional data + domain logic, UMBRAL mission CSV parsers), `crew-overview`, `astronaut-profile`, `trend-chart`, `body-map`, `mission-timeline` (mission-day selector and the `MissionDayProvider` context that screens share with embedded views), `mission-orbit` (3D mission geometry at `/mission`, also shown on the home page through `MissionOrbitEmbed`; reads `mission_positions.csv`).
+Current features: `crew-health-data` (fictional data + domain logic, UMBRAL mission CSV parsers), `crew-overview`, `astronaut-profile`, `trend-chart`, `body-map`, `mission-timeline` (mission-day selector and the `MissionDayProvider` context that screens share with embedded views), `mission-orbit` (3D mission geometry at `/mission`, also shown on the home page through `MissionOrbitEmbed`; reads `mission_positions.csv`), `solar-storm` (the day-493 storm on the Mars surface, shown on the home page through `SolarStormEmbed`; figures come from `crew_events.csv`/`crew_daily.csv` and the mission geometry via the `mission-orbit` index).
 
 ## 3. Add a new feature, step by step
 
