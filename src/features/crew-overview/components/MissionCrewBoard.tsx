@@ -21,10 +21,7 @@ const VIEW_OPTIONS = [
   { value: "mission", label: "Mission in 3D" },
 ] as const;
 
-const VIEW_HINT: Readonly<Record<HomeView, string>> = {
-  crew: "Simulated readings for each crew member on the selected day.",
-  mission: "Where the crew is on the selected day, and how long a signal takes to reach Earth.",
-};
+const MISSION_VIEW_HINT = "Where the crew is on the selected day, and how long a signal takes to reach Earth.";
 
 /** The crew cards for one mission day. */
 function CrewGrid({ data, day, description }: { data: MissionDataset; day: number; description: string }) {
@@ -82,14 +79,17 @@ export function MissionCrewBoard({ data, mission }: { data: MissionDataset; miss
 
   return (
     <MissionDayProvider value={{ data, day, onChange: setDay }}>
-      {mission ? (
-        <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <SegmentedToggle label="Screen" options={VIEW_OPTIONS} value={view} onChange={setView} dataKey="home-view" />
-          <p id="home-view-hint" className="m-0 text-caption text-muted">
-            {VIEW_HINT[view]}
-          </p>
-        </div>
-      ) : null}
+      <div data-crew-overview-header className="mb-7 flex items-center justify-between gap-6 max-sm:mb-6 max-sm:flex-col max-sm:items-start max-sm:gap-3">
+        <h1 id="crew-title" data-crew-overview-title tabIndex={-1} className="m-0 text-display-sm">
+          Crew overview
+        </h1>
+        {mission ? (
+          <div data-home-view-toggle className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <SegmentedToggle label="Screen" options={VIEW_OPTIONS} value={view} onChange={setView} dataKey="home-view" />
+            {view === "mission" ? <p id="home-view-hint" className="m-0 text-caption text-muted">{MISSION_VIEW_HINT}</p> : null}
+          </div>
+        ) : null}
+      </div>
       <MissionDaySelector days={data.days} events={data.events} crew={PROFILES} value={day} onChange={setDay} />
       {mission && view === "mission" ? <div id="home-mission-view">{mission}</div> : <CrewGrid data={data} day={day} description={description} />}
     </MissionDayProvider>

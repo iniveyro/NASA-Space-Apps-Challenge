@@ -1,17 +1,17 @@
 import Link from "next/link";
 
-/** Global header: ASTRA Health brand link and the UMBRAL mission wordmark. */
+/** Global header: ASTRO Health brand link and the UMBRAL mission wordmark. */
 export function SiteHeader() {
   return (
     <header className="flex min-h-19 items-center justify-between gap-4 border-b border-border max-sm:min-h-0 max-sm:gap-3 max-sm:py-3.5">
       <Link
         href="/"
-        aria-label="ASTRA Health home"
+        aria-label="ASTRO Health home"
         data-brand-link="home"
         className="inline-flex min-w-0 items-center gap-3 text-left text-text no-underline focus-visible:outline-offset-5 max-xs:gap-2.5"
       >
-        <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-xl border border-border-strong bg-surface shadow-card text-primary-strong">
-          <svg data-brand-symbol viewBox="0 0 48 48" className="size-10" focusable="false">
+        <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded-xl border border-border-strong bg-surface shadow-card text-primary-strong">
+          <svg data-brand-symbol viewBox="0 0 48 48" className="size-12" focusable="false">
             <ellipse
               cx="24"
               cy="24"
@@ -38,8 +38,7 @@ export function SiteHeader() {
           </svg>
         </span>
         <span className="min-w-0">
-          <strong className="block whitespace-nowrap text-md tracking-snug">ASTRA Health</strong>
-          <small className="mt-px block text-caption text-muted max-xs:text-micro">Mission wellness console</small>
+          <strong className="block whitespace-nowrap text-md tracking-snug">ASTRO Health</strong>
         </span>
       </Link>
       <span className="shrink-0 whitespace-nowrap text-caption font-strong tracking-caps-wide text-text-secondary max-xs:text-xs">UMBRAL</span>

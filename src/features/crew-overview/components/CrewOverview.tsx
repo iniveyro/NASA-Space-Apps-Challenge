@@ -11,13 +11,6 @@ export async function CrewOverview({ mission }: { mission?: ReactNode }) {
   const data = await loadMissionData();
   return (
     <section id="crew-view" className="pt-9" aria-labelledby="crew-title">
-      <div className="mb-9 flex items-center justify-between gap-6 max-sm:mb-7 max-sm:items-start">
-        <div>
-          <h1 id="crew-title" tabIndex={-1} className="mb-1.75">
-            Crew overview
-          </h1>
-        </div>
-      </div>
       <MissionCrewBoard data={data} mission={mission} />
       <PageFooter />
     </section>

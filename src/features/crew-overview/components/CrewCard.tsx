@@ -64,7 +64,6 @@ function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProp
           />
         </span>
       ) : null}
-      {metricId === "radiation" ? <span className="text-micro text-white/90">Cumulative · not a rate or safe limit</span> : null}
     </span>
   );
 }

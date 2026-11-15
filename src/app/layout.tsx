@@ -3,8 +3,8 @@ import { SiteHeader, THEME_COLOR } from "@/shared/design-system";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "ASTRA Health · Crew wellness", template: "ASTRA Health · %s" },
-  description: "ASTRA Health is a fictional astronaut wellness dashboard prototype.",
+  title: { default: "ASTRO Health · Crew wellness", template: "ASTRO Health · %s" },
+  description: "ASTRO Health is a fictional astronaut wellness dashboard prototype.",
   icons: { icon: "data:," },
 };
 
