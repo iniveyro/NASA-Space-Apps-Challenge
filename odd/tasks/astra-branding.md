@@ -21,7 +21,7 @@ Replace the global header's plain lettermark and mission metadata with a code-na
 - [x] AB-1 Replace the boxed A with a token-colored code-native SVG ASTRA mark and preserve accessible home navigation and wordmark.
 - [x] AB-2 Replace top-right metadata with `UMBRAL`; remove obsolete header props and layout imports.
 - [x] AB-3 Add e2e assertions for branding, removed header metadata, and responsive layout; capture desktop/mobile header screenshots for visual inspection.
-- [ ] AB-4 Run the required checks and record the conventional-commit identity.
+- [x] AB-4 Run the required checks and record the conventional-commit identity.
 
 ## Checks
 - Baseline: `npm run lint -- --ignore-pattern '.artifacts/**'`, `npm run typecheck`, `npm test`, `npm run build`.
@@ -36,7 +36,7 @@ Replace the global header's plain lettermark and mission metadata with a code-na
 - Implemented the inline ASTRA A/orbit/pulse logo, visible ASTRA Health wordmark, existing tagline, accessible home link, and UMBRAL-only header right side.
 - Removed obsolete `SiteHeader` props and root-layout fixture imports; preserved simulation caveats elsewhere.
 - Focused e2e passed (16 tests) and full e2e passed (47 tests); desktop/mobile screenshots were inspected and show a compact, overflow-free header.
-- Final verification passed; commit pending.
+- Final verification passed; implementation commit `10195b89f5fc298753dcf67ca48c2899236a096f` recorded.
 
 ## Verification evidence
 - Baseline scoped lint: pass (`npm run lint -- --ignore-pattern '.artifacts/**'`).
@@ -53,7 +53,10 @@ Replace the global header's plain lettermark and mission metadata with a code-na
 - Visual QA screenshots: `test-results/layout-responsive-layout-s-c2378-ark-without-header-metadata-chromium/astra-branding-desktop.png` and `test-results/layout-responsive-layout-s-c2378-ark-without-header-metadata-chromium/astra-branding-mobile.png`.
 
 ## Next step
-Record the implementation commit identity and mirror the completed task state.
+No implementation work remains; the task document and Engram mirror include the verification evidence and commit identity.
+
+## Work-unit commit
+- `10195b89f5fc298753dcf67ca48c2899236a096f` - `feat(design-system): add ASTRA Health header branding`
 
 ## Rollback boundary
-Revert the branding work-unit commit to restore the prior header mark and mission metadata.
+Revert `10195b89f5fc298753dcf67ca48c2899236a096f` to restore the prior header mark and mission metadata.
