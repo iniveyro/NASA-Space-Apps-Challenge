@@ -83,7 +83,7 @@ test.describe("crew overview", () => {
     await expect(selector(page)).toHaveAttribute("data-phase", "landed");
     await expect(page.locator("#mission-day-selector").getByText(`UMBRAL MISSION TIMELINE · ${TOTAL} DAYS`, { exact: true })).toBeVisible();
     await expect(page.locator("#mission-day-selector")).not.toContainText("SIMULATED DAYS");
-    await expect(page.locator("#mission-day-readout")).toHaveText("Day 942 · 12 Jun 2029 · Landed · Link");
+    await expect(page.locator("#mission-day-readout")).toHaveText("Day #942 · 12 Jun 2029");
     await expect(page.getByText("Simulated readings · Day 942 · 12 Jun 2029 · Landed")).toBeVisible();
 
     const cards = page.locator(".crew-card");
@@ -204,7 +204,7 @@ test.describe("crew overview", () => {
     await page.goto("/");
     await selectDay(page, 211);
     await expect(selector(page)).toHaveAttribute("data-phase", "mars_arrival");
-    await expect(page.locator("#mission-day-readout")).toHaveText("Day 211 · 12 Jun 2027 · Mars arrival · Link");
+    await expect(page.locator("#mission-day-readout")).toHaveText("Day #211 · 12 Jun 2027");
     await expectCardsMatchDay(page, 211);
     await expectChartsMatchDay(page, 211);
     await expect(card(page, "sofia").locator("[data-metric-readout='bloodPressure']")).toHaveAttribute("data-status", "demo-alert");
@@ -261,7 +261,7 @@ test.describe("crew overview", () => {
     await page.locator("[data-event-day='493']").click();
     await expect(selector(page)).toHaveAttribute("data-selected-day", "493");
     await expect(selector(page)).toHaveAttribute("data-comm", "blackout");
-    await expect(page.locator("#mission-day-readout")).toHaveText("Day 493 · 20 Mar 2028 · Mars surface · Comm blackout");
+    await expect(page.locator("#mission-day-readout")).toHaveText("Day #493 · 20 Mar 2028");
     const statuses = await page.locator("[data-metric-readout='radiation']").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-status")));
     expect(statuses).toEqual(["demo-deviation", "demo-deviation", "demo-deviation", "demo-deviation"]);
     await expect(page.locator(".crew-card .metric-status").filter({ hasText: "Deviation" })).toHaveCount(4);

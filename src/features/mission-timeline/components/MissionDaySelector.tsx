@@ -36,7 +36,7 @@ function describeDay(info: MissionDay | undefined): string {
   return `Day #${info.day} · ${formatMissionDate(info.date)}`;
 }
 
-/** Controlled mission-day picker: phase band, range slider, ±1 day and back-to-latest buttons, and scenario event markers. */
+/** Controlled mission-day picker: labelled phase band flanked by ±1 day buttons, a back-to-latest button, and scenario event markers. */
 export function MissionDaySelector({ days, events, crew = [], value, onChange }: MissionDaySelectorProps) {
   const total = days.length;
   const day = clampDay(value, total);
@@ -69,38 +69,16 @@ export function MissionDaySelector({ days, events, crew = [], value, onChange }:
         titleId="mission-day-title"
         className="mb-3 flex-wrap"
         actions={
-          <div className="flex items-center gap-1.5" role="group" aria-label="Change mission day">
-            <button
-              type="button"
-              id="mission-day-prev"
-              aria-label="Previous day"
-              disabled={day <= 1}
-              onClick={() => select(day - 1)}
-              className="min-h-8 min-w-8 cursor-pointer rounded-sm border border-border bg-surface-subtle px-2 text-caption font-bold text-text-strong hover:border-hover-border disabled:cursor-not-allowed disabled:text-muted"
-            >
-              ◀
-            </button>
-            <button
-              type="button"
-              id="mission-day-next"
-              aria-label="Next day"
-              disabled={day >= total}
-              onClick={() => select(day + 1)}
-              className="min-h-8 min-w-8 cursor-pointer rounded-sm border border-border bg-surface-subtle px-2 text-caption font-bold text-text-strong hover:border-hover-border disabled:cursor-not-allowed disabled:text-muted"
-            >
-              ▶
-            </button>
-            <button
-              type="button"
-              id="mission-day-latest"
-              aria-label="Back to latest day"
-              disabled={day >= total}
-              onClick={() => select(total)}
-              className="min-h-8 min-w-8 cursor-pointer rounded-sm border border-border bg-surface-subtle px-2 text-caption font-bold text-text-strong hover:border-hover-border disabled:cursor-not-allowed disabled:text-muted"
-            >
-              Latest
-            </button>
-          </div>
+          <button
+            type="button"
+            id="mission-day-latest"
+            aria-label="Back to latest day"
+            disabled={day >= total}
+            onClick={() => select(total)}
+            className="min-h-8 min-w-8 cursor-pointer rounded-md border border-border bg-surface-subtle px-2 text-caption font-bold text-text-strong hover:border-hover-border disabled:cursor-not-allowed disabled:text-muted"
+          >
+            Latest
+          </button>
         }
       />
 
