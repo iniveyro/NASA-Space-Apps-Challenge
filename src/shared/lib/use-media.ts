@@ -1,3 +1,4 @@
+/** Client hooks for visitor and browser capabilities that several features need. */
 import { useSyncExternalStore } from "react";
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
