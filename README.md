@@ -25,6 +25,7 @@ Routes:
 
 - `/` — crew overview. Each card links to its profile.
 - `/astronaut/<id>` — profile (`ines`, `kanji`, `malik`, `sofia`). The four profiles are prerendered at build time; unknown ids show a not-found page.
+- `/mission` — mission geometry: 3D view of the Sun, Earth, Mars and the crew on each mission day, the Earth-link delay, and the story beats. `?day=<n>` opens a given day. Falls back to a 2D diagram without WebGL.
 
 ### Scripts
 
@@ -48,6 +49,7 @@ src/
     astronaut-profile/      profile header, metric grid, reference detail, dashboard state
     trend-chart/            SVG history chart and "Wellness trends" panel
     body-map/               body-highlighter illustration and region selectors
+    mission-orbit/          3D mission geometry (three.js), Earth-link readout, story beats
   shared/
     design-system/          theme.css tokens, status tones, UI primitives
     lib/                    cn(), date formatting
