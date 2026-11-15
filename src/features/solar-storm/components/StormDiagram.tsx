@@ -30,13 +30,14 @@ export function StormDiagram({ progress, names, className }: StormDiagramProps) 
   return (
     <svg
       viewBox={VIEW_BOX}
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label="Plan of the habitat, the refuge and the walk back to the airlock on the day of the solar storm"
       data-storm-diagram=""
-      className={cn("block h-full w-full", className)}
+      className={cn("block h-full w-full overflow-visible", className)}
     >
-      <rect x={-66} y={-12} width={90} height={56} className="fill-space-mars/20" />
+      {/* Oversized, so the ground fills the screen beside the plan whatever its shape. */}
+      <rect x={-400} y={-400} width={800} height={800} className="fill-space-mars/20" />
       <path d={PATH} className="fill-none stroke-space-signal" strokeWidth={0.5} strokeDasharray="1.6 1.4" />
       <circle cx={FAR_POINT[0]} cy={FAR_POINT[1]} r={1.3} className="fill-none stroke-console-muted" strokeWidth={0.4} />
       <rect x={-3} y={-9} width={6} height={18} rx={3} className="fill-console-muted stroke-console-text" strokeWidth={0.4} />
@@ -46,7 +47,7 @@ export function StormDiagram({ progress, names, className }: StormDiagramProps) 
         walker.inside ? null : (
           <g key={index} data-walker={index}>
             <circle cx={walker.x} cy={walker.z} r={1.1} className={index === 0 ? "fill-space-sun-glow" : "fill-space-signal"} />
-            <text x={walker.x} y={walker.z - 2} textAnchor="middle" fontSize={2.6} className="fill-console-text font-semibold">
+            <text x={walker.x} y={walker.z + (index === 0 ? -2 : 4)} textAnchor="middle" fontSize={2.6} className="fill-console-text font-semibold">
               {names[index]}
             </text>
           </g>
@@ -64,7 +65,7 @@ export function StormDiagram({ progress, names, className }: StormDiagramProps) 
         <line x1={0} y1={0} x2={(sunX / sunLength) * 7} y2={(sunZ / sunLength) * 7} className="stroke-space-sun" strokeWidth={0.6} />
         <circle cx={(sunX / sunLength) * 7} cy={(sunZ / sunLength) * 7} r={1.4} className="fill-space-sun" />
       </g>
-      <rect x={-66} y={-12} width={90} height={56} className="fill-space-mars" opacity={0.5 * intensity} />
+      <rect x={-400} y={-400} width={800} height={800} className="fill-space-mars" opacity={0.5 * intensity} />
     </svg>
   );
 }
