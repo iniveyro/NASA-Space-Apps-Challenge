@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { AstronautProfile } from "@/features/astronaut-profile";
 import { PROFILES, findProfile } from "@/features/crew-health-data";
 
+// Profiles resolve synchronously from fixtures, so blocking on params costs nothing;
+// streaming here would also move metadata out of the initial head.
+export const instant = false;
+
 export function generateStaticParams() {
   return PROFILES.map((profile) => ({ id: profile.id }));
 }
