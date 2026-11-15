@@ -1,5 +1,5 @@
 /*
- * ASTRA Health design tokens — the single source of truth for color, radius,
+ * ASTRO Health design tokens — the single source of truth for color, radius,
  * typography, and shadows. Tailwind v4 turns every token below into utilities
  * (e.g. --color-status-ok-surface -> bg-status-ok-surface, --radius-card -> rounded-card).
  *

@@ -58,7 +58,7 @@ export function MissionDaySelector({ days, events, crew = [], value, onChange }:
       className="mb-7 min-w-0 rounded-xl border border-border bg-surface p-5 max-sm:p-4"
     >
       <PanelHeading
-        eyebrow={`UMBRAL MISSION TIMELINE · ${total} SIMULATED DAYS`}
+        eyebrow={`UMBRAL MISSION TIMELINE · ${total} DAYS`}
         title="Mission day"
         titleId="mission-day-title"
         className="mb-3 flex-wrap"

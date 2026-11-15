@@ -12,7 +12,6 @@ import { Avatar, toneBorder, toneFor, toneSurface } from "@/shared/design-system
 import { cn } from "@/shared/lib/cn";
 
 import { MetricMiniChart, type MiniChartSeries } from "./MetricMiniChart";
-import { OxygenRing } from "./OxygenRing";
 
 const VITALS: readonly MetricId[] = ["heartRate", "bloodPressure", "temperature", "radiation"];
 
@@ -36,12 +35,13 @@ function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProp
   const value = metricReading(reading, metricId);
   const formatted = formatValue(metricId, value);
   const scenario = resolveDayScenario(person.id, metricId, day, value);
+  const statusLabel = scenario.status === "within-demo-reference" ? null : scenario.label;
   return (
     <span
       role="listitem"
       data-metric-readout={metricId}
       data-status={scenario.status}
-      aria-label={`${metric.label}: ${formatted} ${metric.unit}. ${scenario.label}.`}
+      aria-label={`${metric.label}: ${formatted} ${metric.unit}.${statusLabel ? ` ${statusLabel}.` : ""}`}
       className={cn(
         "vital-tile flex min-h-24.5 min-w-0 flex-col justify-between gap-1.25 rounded-md border-2 p-2.5",
         toneSurface[toneFor(scenario.status)],
@@ -52,9 +52,9 @@ function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProp
       <span className="vital-value text-vital leading-tight font-heavy tracking-tight text-white tabular-nums wrap-anywhere">
         {formatted} <small className="text-micro font-medium tracking-normal text-white/90">{metric.unit}</small>
       </span>
-      <span className="metric-status inline-flex items-center gap-1.5 text-xs leading-tight font-bold">{scenario.label}</span>
+      {statusLabel ? <span className="metric-status inline-flex items-center gap-1.5 text-xs leading-tight font-bold">{statusLabel}</span> : null}
       {trends[metricId] ? (
-        <span className="flex items-center justify-end">
+        <span className="flex w-full items-center">
           <MetricMiniChart
             day={day}
             metricLabel={metric.label.toLowerCase()}
@@ -64,7 +64,6 @@ function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProp
           />
         </span>
       ) : null}
-      {metricId === "radiation" ? <span className="text-micro text-white/90">Cumulative · not a rate or safe limit</span> : null}
     </span>
   );
 }
@@ -106,18 +105,11 @@ export function CrewCard({ person, day, reading, trends, events }: CrewCardProps
             ))}
           </span>
         ) : null}
-        <span className="m-0 grid grid-cols-2 gap-2" role="list">
+        <span aria-hidden="true" data-crew-divider className="my-3 block border-t border-divider" />
+        <span className="m-0 grid grid-cols-2 gap-3" role="list">
           {VITALS.map((metricId) => (
             <VitalTile key={metricId} person={person} day={day} reading={reading} metricId={metricId} trends={trends} />
           ))}
-          <span
-            role="listitem"
-            data-metric-readout="spo2"
-            className="vital-tile col-span-full flex min-h-17.5 min-w-0 flex-row items-center justify-start gap-3 rounded-md border border-console-tile-border bg-console-raised p-2.5"
-          >
-            <OxygenRing value={metricReading(reading, "spo2")} />
-            <span className="text-xs text-console-muted">Simulated point reading · not recorded in the mission dataset</span>
-          </span>
         </span>
         <span aria-hidden="true" className="mt-3.25 flex items-center justify-between border-t border-divider pt-2.5 text-caption font-semibold text-text-subtle">
           Open profile · 3D body <span className="text-lg text-primary">→</span>

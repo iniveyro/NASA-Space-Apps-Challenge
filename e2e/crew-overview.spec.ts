@@ -75,11 +75,13 @@ async function expectChartsMatchDay(page: Page, day: number) {
 test.describe("crew overview", () => {
   test("defaults to the last mission day with four cards matching the mission dataset", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle("ASTRA Health · Crew wellness");
+    await expect(page).toHaveTitle("ASTRO Health · Crew wellness");
     await expect(page.getByRole("heading", { level: 1, name: "Crew overview" })).toBeVisible();
-    await expect(page.locator("#environment-label")).toHaveText("ENVIRONMENT · MICROGRAVITY");
+    await expect(page.getByText("Simulated readings for each crew member on the selected day.", { exact: true })).toHaveCount(0);
     await expect(selector(page)).toHaveAttribute("data-selected-day", String(TOTAL));
     await expect(selector(page)).toHaveAttribute("data-phase", "landed");
+    await expect(page.locator("#mission-day-selector").getByText(`UMBRAL MISSION TIMELINE · ${TOTAL} DAYS`, { exact: true })).toBeVisible();
+    await expect(page.locator("#mission-day-selector")).not.toContainText("SIMULATED DAYS");
     await expect(page.locator("#mission-day-readout")).toHaveText("Day 942 · 12 Jun 2029 · Landed · Link");
     await expect(page.getByText("Simulated readings · Day 942 · 12 Jun 2029 · Landed")).toBeVisible();
 
@@ -90,11 +92,22 @@ test.describe("crew overview", () => {
       await expect(current.locator(".crew-name")).toHaveText(person.name);
       await expect(current.getByText("7-day trend", { exact: true })).toHaveCount(0);
       await expect(current.getByText(/^(Stable|Monitoring|Simulated alert|Active|Resting)$/)).toHaveCount(0);
-      await expect(current.locator("[data-metric-readout]:not([data-metric-readout='spo2'])")).toHaveCount(4);
-      await expect(current.locator(".oxygen-value")).toHaveText("Unknown");
+      await expect(current.locator("[data-metric-readout]")).toHaveCount(4);
+      await expect(current.locator("[data-metric-readout='spo2']")).toHaveCount(0);
+      await expect(current.locator("[data-metric-readout='radiation']")).toBeVisible();
+      await expect(current).not.toContainText("Cumulative · not a rate or safe limit");
+      await expect(current).not.toContainText(/reference|SpO₂|oxygen/i);
       await expect(current.locator(".mini-sparkline")).toHaveCount(4);
-      const tiles = current.locator(".vital-tile:not([data-metric-readout='spo2'])");
+      const tiles = current.locator(".vital-tile");
       await expect(tiles).toHaveCount(4);
+      const divider = current.locator("[data-crew-divider]");
+      await expect(divider).toHaveCount(1);
+      await expect(divider).toHaveAttribute("aria-hidden", "true");
+      expect(await divider.evaluate((node) => getComputedStyle(node).borderTopWidth)).toBe("1px");
+      const chartBounds = await current.locator("svg[data-mini-chart]").first().boundingBox();
+      const tileBounds = await tiles.first().boundingBox();
+      expect(chartBounds?.width).toBeGreaterThan(50);
+      expect(chartBounds!.width / tileBounds!.width).toBeGreaterThan(0.7);
       const styles = await tiles.evaluateAll((nodes) => nodes.map((node) => ({
         background: getComputedStyle(node).backgroundColor,
         borderWidth: getComputedStyle(node).borderTopWidth,
@@ -128,6 +141,62 @@ test.describe("crew overview", () => {
     }
     await expectCardsMatchDay(page, TOTAL);
     await expectChartsMatchDay(page, TOTAL);
+  });
+
+  test("aligns the overview title and view controls on desktop and stacks them on mobile", async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const title = page.locator("[data-crew-overview-title]");
+    const controls = page.locator("[data-home-view-toggle]");
+    const titleBounds = await title.boundingBox();
+    const controlsBounds = await controls.boundingBox();
+    expect(titleBounds).not.toBeNull();
+    expect(controlsBounds).not.toBeNull();
+    expect(controlsBounds!.x).toBeGreaterThanOrEqual(titleBounds!.x + titleBounds!.width);
+    expect(await title.evaluate((node) => Number.parseFloat(getComputedStyle(node).fontSize))).toBeLessThan(38);
+    await page.locator("[data-crew-overview-header]").screenshot({ path: testInfo.outputPath("astro-crew-heading-desktop.png") });
+
+    await page.getByRole("button", { name: "Mission in 3D" }).click();
+    await expect(page.locator("#home-mission-view")).toBeVisible();
+    await page.getByRole("button", { name: "Crew health" }).click();
+    await expect(page.locator("#crew-grid")).toBeVisible();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectNoHorizontalOverflow(page);
+    const mobileTitle = await title.boundingBox();
+    const mobileControls = await controls.boundingBox();
+    expect(mobileTitle).not.toBeNull();
+    expect(mobileControls).not.toBeNull();
+    expect(mobileControls!.y).toBeGreaterThanOrEqual(mobileTitle!.y + mobileTitle!.height);
+    await page.locator("[data-crew-overview-header]").screenshot({ path: testInfo.outputPath("astro-crew-heading-mobile.png") });
+  });
+
+  test("uses four desktop columns and wraps a fifth card onto the next row", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/");
+    const grid = page.locator("#crew-grid");
+    const layout = await grid.evaluate((element) => {
+      const cards = Array.from(element.querySelectorAll<HTMLElement>(".crew-card"));
+      const first = cards[0].getBoundingClientRect();
+      const columnCount = getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length;
+      const fifth = cards[0].cloneNode(true) as HTMLElement;
+      fifth.dataset.crew = "fifth-card-test";
+      element.append(fifth);
+      const fifthBounds = fifth.getBoundingClientRect();
+      return {
+        cardCount: cards.length,
+        columnCount,
+        firstTop: first.top,
+        firstLeft: first.left,
+        fifthTop: fifthBounds.top,
+        fifthLeft: fifthBounds.left,
+      };
+    });
+
+    expect(layout.cardCount).toBe(4);
+    expect(layout.columnCount).toBe(4);
+    expect(layout.fifthTop).toBeGreaterThan(layout.firstTop);
+    expect(layout.fifthLeft).toBeCloseTo(layout.firstLeft, 0);
   });
 
   test("the range slider, keyboard, and prev/next buttons change the day and every card", async ({ page }) => {
@@ -239,7 +308,7 @@ test.describe("crew overview", () => {
     await page.getByRole("link", { name: `Open ${fourth.name} profile` }).click();
     await expect(page).toHaveURL(new RegExp(`/astronaut/${fourth.id}$`));
     await expect(page.getByRole("heading", { level: 1, name: fourth.name })).toBeVisible();
-    await expect(page).toHaveTitle(`ASTRA Health · ${fourth.name}`);
+    await expect(page).toHaveTitle(`ASTRO Health · ${fourth.name}`);
 
     await page.goBack();
     await expect(page).toHaveURL(/\/$/);
