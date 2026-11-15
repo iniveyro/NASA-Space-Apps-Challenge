@@ -14,17 +14,18 @@ function cardEvents(data: MissionDataset, crewId: string, day: number, dailyCode
   return listed;
 }
 
-type HomeView = "crew" | "mission";
+/** A screen the home page can switch to in place, beside the crew cards. */
+export interface HomeView {
+  id: string;
+  label: string;
+  /** One line under the switch while this screen is open. */
+  hint: string;
+  /** When the screen is about one scenario day: opens the mission day of the first event with this code. */
+  opensOnEvent?: string;
+  content: ReactNode;
+}
 
-const VIEW_OPTIONS = [
-  { value: "crew", label: "Crew health" },
-  { value: "mission", label: "Mission in 3D" },
-] as const;
-
-const VIEW_HINT: Readonly<Record<HomeView, string>> = {
-  crew: "Simulated readings for each crew member on the selected day.",
-  mission: "Where the crew is on the selected day, and how long a signal takes to reach Earth.",
-};
+const CREW_VIEW = { id: "crew", label: "Crew health", hint: "Simulated readings for each crew member on the selected day." } as const;
 
 /** The crew cards for one mission day. */
 function CrewGrid({ data, day, description }: { data: MissionDataset; day: number; description: string }) {
@@ -60,30 +61,39 @@ function CrewGrid({ data, day, description }: { data: MissionDataset; day: numbe
 }
 
 /**
- * Mission-day selector plus what it drives: the crew cards, or the mission view (`mission`) when the visitor
- * switches to it. Both follow the same day. Defaults to the last mission day and the crew cards.
+ * Mission-day selector plus what it drives: the crew cards, or one of `views` when the visitor switches to it.
+ * Every screen follows the same day. Defaults to the last mission day and the crew cards.
  */
-export function MissionCrewBoard({ data, mission }: { data: MissionDataset; mission?: ReactNode }) {
+export function MissionCrewBoard({ data, views = [] }: { data: MissionDataset; views?: readonly HomeView[] }) {
   const total = data.days.length;
   const [day, setDay] = useState(total);
-  const [view, setView] = useState<HomeView>("crew");
+  const [viewId, setViewId] = useState<string>(CREW_VIEW.id);
   const info = data.days[day - 1];
   const description = info
     ? `Simulated readings · Day ${info.day} · ${formatMissionDate(info.date)} · ${phaseLabel(info.phase)}`
     : "Simulated readings · Day unavailable";
+  const active = views.find((view) => view.id === viewId);
+  const options = [CREW_VIEW, ...views].map((view) => ({ value: view.id, label: view.label }));
+
+  const selectView = (id: string) => {
+    setViewId(id);
+    const eventCode = views.find((view) => view.id === id)?.opensOnEvent;
+    const event = eventCode ? data.events.find((candidate) => candidate.event === eventCode) : undefined;
+    if (event) setDay(event.day);
+  };
 
   return (
     <MissionDayProvider value={{ data, day, onChange: setDay }}>
-      {mission ? (
+      {views.length > 0 ? (
         <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <SegmentedToggle label="Screen" options={VIEW_OPTIONS} value={view} onChange={setView} dataKey="home-view" />
+          <SegmentedToggle label="Screen" options={options} value={active?.id ?? CREW_VIEW.id} onChange={selectView} dataKey="home-view" />
           <p id="home-view-hint" className="m-0 text-caption text-muted">
-            {VIEW_HINT[view]}
+            {(active ?? CREW_VIEW).hint}
           </p>
         </div>
       ) : null}
       <MissionDaySelector days={data.days} events={data.events} crew={PROFILES} value={day} onChange={setDay} />
-      {mission && view === "mission" ? <div id="home-mission-view">{mission}</div> : <CrewGrid data={data} day={day} description={description} />}
+      {active ? <div id={`home-${active.id}-view`}>{active.content}</div> : <CrewGrid data={data} day={day} description={description} />}
     </MissionDayProvider>
   );
 }
