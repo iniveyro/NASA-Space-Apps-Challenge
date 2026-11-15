@@ -14,6 +14,7 @@ data/raw/          Original NASA files, unmodified
   donki/           May 2024 solar storm (NASA DONKI), filled by scripts/fetch_sources.py
 data/processed/    Team-generated, used by the app
   mission_timeline.csv/.json   942 days: distances, light delay, link status, sol, Ls, dose
+  mission_positions.csv        942 days: heliocentric positions of Earth, Mars and the spacecraft (AU)
   crew_daily.csv               4 crew x 942 days: HR, BP, temperature, sleep, HRV, glucose, mood, dose
   crew_events.csv              Scenario events (day 120, 211, 493)
 scripts/           Python that rebuilds everything from data/raw
@@ -25,6 +26,7 @@ scripts/           Python that rebuilds everything from data/raw
 pip install astropy numpy
 python scripts/fetch_sources.py      # download raw files (set NASA_API_KEY for DONKI)
 python scripts/mission_timeline.py   # mission geometry -> data/processed/mission_timeline.*
+python scripts/mission_positions.py  # 3D vectors behind that geometry -> data/processed/mission_positions.csv
 python scripts/simulate_crew.py      # crew series -> data/processed/crew_*.csv
 python scripts/validate_horizons.py  # compare with JPL Horizons
 ```
@@ -44,6 +46,7 @@ During the surface phase (days 211 to 732):
 | mission_timeline | `delay_oneway_min` | min | Spacecraft–Earth distance divided by c |
 | mission_timeline | `comm` | — | `blackout` when the Sun–Earth–spacecraft angle is below 2° (NASA ASCEND 2022) |
 | mission_timeline | `dose_cum_mSv` | mSv | 1.84 mSv/d in cruise, 0.64 mSv/d on the surface (MSL RAD) |
+| mission_positions | `earth_*_au`, `mars_*_au`, `ship_*_au` | AU | Heliocentric ecliptic J2000 vectors (x to the vernal equinox, z to the ecliptic north). Distances and the Sun–Earth–spacecraft angle rebuilt from them match mission_timeline within 0.01 million km and 0.02° |
 | crew_daily | `hr_rest_bpm`, `sbp_mmHg`, `dbp_mmHg`, `temp_C`, `sleep_h`, `hrv_rmssd_ms`, `glucose_mg_dL`, `mood_1to5` | — | Simulated: baseline + sigma·N(0,1) + event, seed 2026 |
 
 ## Assumptions (team choices)

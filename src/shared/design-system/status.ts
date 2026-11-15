@@ -16,6 +16,9 @@ const TONE_BY_STATUS: Record<string, Tone> = {
   monitoring: "warn",
   "simulated-alert": "alert",
   resting: "info",
+  // Spacecraft–Earth link (mission timeline)
+  link: "ok",
+  blackout: "unknown",
 };
 
 export function toneFor(status: string | null | undefined): Tone {
@@ -56,4 +59,16 @@ export const toneDot: Record<Tone, string> = {
   alert: "bg-status-alert",
   unknown: "bg-status-unknown",
   info: "bg-status-info",
+};
+
+/**
+ * Token name per tone for canvas/WebGL accents on dark surfaces, e.g. `readToken(toneToken[tone])`.
+ * These are the same colors as `toneBorder`; use the classes above wherever a class can be used.
+ */
+export const toneToken: Record<Tone, string> = {
+  ok: "color-status-ok-border",
+  warn: "color-status-warn-border",
+  alert: "color-status-alert-border",
+  unknown: "color-status-unknown-border",
+  info: "color-primary",
 };

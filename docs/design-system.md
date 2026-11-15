@@ -36,6 +36,7 @@ The stock Tailwind palette, fonts, tracking, and shadows are reset with `--*: in
 | Status unknown | `status-unknown` #94a3b8 · `-surface` #475569 · `-border` #94a3b8 · `-soft` #eef1f5 · `-ink` #334155 |
 | Status info | `status-info` #2563eb |
 | Charts | `chart-primary` #2563eb · `chart-secondary` #64748b · `chart-grid` #e7ebf0 · `chart-bar` #7c9cc2 · `chart-axis` #64748b · `body-base` #dce2e8 · `body-highlight` #8da4ba |
+| 3D scenes (WebGL) | `space-void` #0a101c (scene background) · `space-star` #cbd7e8 · `space-sun` #ffd98a · `space-sun-glow` #ff9f38 · `space-earth` #4f93ea · `space-mars` #d2643c · `space-orbit` #3b4d66 · `space-signal` #4fd8c4 (Earth link) |
 
 Status suffixes: **surface** = filled tile with white text · **border** = accent on dark cards · **soft** = light callout background · **ink** = text on soft · **on-dark** = status text on console cards.
 
@@ -59,13 +60,15 @@ Status suffixes: **surface** = filled tile with white text · **border** = accen
 
 | Domain status | Tone |
 | --- | --- |
-| `within-demo-reference`, `stable`, `active` | `ok` |
+| `within-demo-reference`, `stable`, `active`, `link` | `ok` |
 | `demo-deviation`, `monitoring` | `warn` |
 | `demo-alert`, `simulated-alert` | `alert` |
 | `resting` | `info` |
-| `unknown`, anything else | `unknown` |
+| `unknown`, `blackout` (no Earth link), anything else | `unknown` |
 
 Then pick the treatment: `toneSurface[tone]` (filled tile), `toneSoft[tone]` (callout with left accent), `toneBorder[tone]` (outline on dark card), `toneDot[tone]` (indicator). Always render the text label too — color is never the only signal.
+
+Canvas and WebGL materials cannot take classes: read the color with `readToken(toneToken[tone])` (same colors as `toneBorder`) and the `space-*` tokens with `readToken("color-space-earth")`. Keep the text label next to the scene.
 
 ## Primitives
 
@@ -81,7 +84,7 @@ Then pick the treatment: `toneSurface[tone]` (filled tile), `toneSoft[tone]` (ca
 | `Avatar` | Neutral initials avatar (`size`, `variant`) |
 | `SegmentedToggle` | Pressed-button group (e.g. 7/30 days) — client component |
 
-Helpers: `cn()` (`@/shared/lib/cn`), `formatShortDate()` (`@/shared/lib/format-date`), `readToken()`, `THEME_COLOR`.
+Helpers: `cn()` (`@/shared/lib/cn`), `formatShortDate()` (`@/shared/lib/format-date`), `readToken()`, `toneToken`, `THEME_COLOR`.
 
 ## Do / Don't
 
