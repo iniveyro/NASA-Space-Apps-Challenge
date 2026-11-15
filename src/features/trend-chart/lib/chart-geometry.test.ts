@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getMetric, getSeries } from "@/features/crew-health-data";
-import { CHART, PLOT_WIDTH, buildScales, nearestIndex, pointTooltip } from "./chart-geometry";
+import { CHART, PLOT_WIDTH, buildScales, nearestIndex, plottablePoints, pointTooltip } from "./chart-geometry";
 
 describe("trend chart geometry", () => {
   it("uses a fixed 1–5 domain for categorical self-reports", () => {
@@ -28,5 +28,40 @@ describe("trend chart geometry", () => {
     const stress = getMetric("stress")!;
     const point = getSeries("malik", "stress", 7).at(-1)!;
     expect(pointTooltip(stress, point)).toBe("Jun 12 · Stress: 1 of 5");
+  });
+
+  it("keeps only complete finite readings from an external series", () => {
+    const heartRate = getMetric("heartRate")!;
+    const bp = getMetric("bloodPressure")!;
+    expect(
+      plottablePoints(heartRate, [
+        { date: "2027-06-10", value: 61 },
+        { date: "2027-06-11", value: null },
+        { date: "2027-06-12", value: Number.NaN },
+        { date: "2027-06-13", value: { systolic: 120, diastolic: 70 } },
+        { date: "2027-06-14", value: 63 },
+      ]),
+    ).toEqual([
+      { date: "2027-06-10", value: 61 },
+      { date: "2027-06-14", value: 63 },
+    ]);
+    expect(
+      plottablePoints(bp, [
+        { date: "2027-06-10", value: { systolic: 120, diastolic: 70 } },
+        { date: "2027-06-11", value: { systolic: 120, diastolic: Number.NaN } },
+        { date: "2027-06-12", value: 118 },
+        { date: "2027-06-13", value: null },
+      ]),
+    ).toEqual([{ date: "2027-06-10", value: { systolic: 120, diastolic: 70 } }]);
+    expect(plottablePoints(heartRate, [])).toEqual([]);
+  });
+
+  it("scales a single-point series without non-finite coordinates", () => {
+    const heartRate = getMetric("heartRate")!;
+    const { x, y, ticks } = buildScales(heartRate, [{ date: "2026-11-14", value: 61 }]);
+    expect(x(0)).toBe(CHART.left);
+    expect(Number.isFinite(y(61))).toBe(true);
+    expect(ticks.every((tick) => Number.isFinite(tick))).toBe(true);
+    expect(nearestIndex(400, { left: 0, width: CHART.width }, 1)).toBe(0);
   });
 });

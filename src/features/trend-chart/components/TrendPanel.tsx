@@ -1,6 +1,6 @@
 "use client";
 
-import type { Metric, Profile } from "@/features/crew-health-data";
+import type { Metric, Profile, SeriesPoint } from "@/features/crew-health-data";
 import { Panel, PanelHeading, SegmentedToggle } from "@/shared/design-system";
 import { cn } from "@/shared/lib/cn";
 import { TrendChart } from "./TrendChart";
@@ -10,6 +10,8 @@ interface TrendPanelProps {
   metric: Metric;
   days: 7 | 30;
   onDaysChange: (days: 7 | 30) => void;
+  /** History to plot instead of the profile's generated one; an empty series shows the chart's empty state. */
+  series?: readonly SeriesPoint[];
   className?: string;
 }
 
@@ -19,7 +21,7 @@ const RANGE_OPTIONS = [
 ] as const;
 
 /** "Wellness trends" panel: range switch, selected metric header, chart, and legend. */
-export function TrendPanel({ person, metric, days, onDaysChange, className }: TrendPanelProps) {
+export function TrendPanel({ person, metric, days, onDaysChange, series, className }: TrendPanelProps) {
   return (
     <Panel className={cn("trend-panel", className)} aria-labelledby="trend-title">
       <PanelHeading
@@ -42,7 +44,7 @@ export function TrendPanel({ person, metric, days, onDaysChange, className }: Tr
           LAST {days} DAYS
         </span>
       </div>
-      <TrendChart key={`${metric.id}-${days}`} person={person} metric={metric} days={days} />
+      <TrendChart key={`${metric.id}-${days}`} person={person} metric={metric} days={days} series={series} />
       <div id="chart-legend" className="flex flex-wrap gap-3.75 pt-1.75 pl-11 text-caption text-text-subtle max-xs:pl-8.5">
         {metric.id === "bloodPressure" ? (
           <>
