@@ -5,7 +5,7 @@ import { parseEvents } from "../src/features/crew-health-data";
 import { formatDegrees, formatDelay, formatMkm } from "../src/features/mission-orbit/lib/format";
 import { blackoutSpans, delayMinutes, farthestDay, parseMissionGeometry } from "../src/features/mission-orbit/lib/geometry";
 import { buildStory } from "../src/features/mission-orbit/lib/story";
-import { expect, expectNoHorizontalOverflow, test } from "./fixtures";
+import { expect, expectNoHorizontalOverflow, supportsWebgl, test } from "./fixtures";
 
 const csv = (name: string) => readFileSync(path.join(process.cwd(), "data", "processed", name), "utf-8");
 const GEOMETRY = parseMissionGeometry(csv("mission_timeline.csv"), csv("mission_positions.csv"));
@@ -117,8 +117,8 @@ test.describe("mission geometry", () => {
     await expect(viewport.locator("[data-orbit-diagram]")).toHaveCount(1);
     await expect(page.locator("#orbit-notice")).toContainText("Distances between bodies are to scale");
     await expect(board(page)).toHaveAttribute("data-selected-day", "300");
-    await expect(viewport).toHaveAttribute("data-mode", /^(3d|2d)$/);
-    if ((await viewport.getAttribute("data-mode")) === "3d") {
+    if (await supportsWebgl(page)) {
+      await expect(viewport).toHaveAttribute("data-mode", "3d");
       await expect(viewport).toHaveAttribute("data-scene-ready", "true", { timeout: 20_000 });
       await expect(viewport.locator("[data-scene-label='mars']")).toHaveText("Mars · crew");
       await page.locator("button[data-view='crew']").click();
@@ -128,6 +128,7 @@ test.describe("mission geometry", () => {
       await page.locator("button[data-mode='3d']").click();
       await expect(viewport).toHaveAttribute("data-scene-ready", "true", { timeout: 20_000 });
     } else {
+      await expect(viewport).toHaveAttribute("data-mode", "2d");
       await expect(page.locator("#orbit-notice")).toContainText("3D is not available in this browser");
     }
   });

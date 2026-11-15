@@ -36,7 +36,10 @@ function probeWebgl(): boolean {
 
 const subscribeNever = () => () => {};
 
-/** True when the browser can create a WebGL context. Probed once; false during server rendering. */
+/**
+ * True when the browser can create a WebGL context (probed once). Support is assumed while rendering
+ * on the server and hydrating, so the 3D layout is what loads; it settles right after hydration.
+ */
 export function useWebglSupport(): boolean {
-  return useSyncExternalStore(subscribeNever, probeWebgl, () => false);
+  return useSyncExternalStore(subscribeNever, probeWebgl, () => true);
 }
