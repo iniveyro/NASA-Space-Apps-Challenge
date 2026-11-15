@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PROFILES } from "@/features/crew-health-data";
-import { MissionDaySelector, formatMissionDate } from "@/features/mission-timeline";
+import { MissionDaySelector, formatMissionDate, useMissionDay } from "@/features/mission-timeline";
 import { Panel, PanelHeading, SegmentedToggle } from "@/shared/design-system";
 import { cn } from "@/shared/lib/cn";
 import { usePrefersReducedMotion, useWebglSupport } from "@/shared/lib/use-media";
@@ -38,11 +38,31 @@ const BEAT_HOLD_MS = 1400;
 const toolbarButton =
   "inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-sm border border-border bg-surface-subtle px-3 text-caption font-bold text-text-strong hover:border-hover-border";
 
-/** Interactive mission view: day selector, 3D scene, Earth-link readout, story, and crew readings. */
+interface MissionConsoleProps extends MissionView {
+  day: number;
+  onDayChange: (day: number) => void;
+  /** Inside another screen: that screen owns the day selector and the address bar. */
+  embedded: boolean;
+}
+
+/** The mission view on its own page: reads ?day= and keeps the day in the address bar. */
 export function MissionOrbitBoard({ data, geometry, story }: MissionView) {
-  const total = geometry.total;
   const params = useSearchParams();
-  const [day, setDay] = useState(() => clampDay(Number(params.get("day") ?? 1), total));
+  const [day, setDay] = useState(() => clampDay(Number(params.get("day") ?? 1), geometry.total));
+  return <MissionConsole data={data} geometry={geometry} story={story} day={day} onDayChange={setDay} embedded={false} />;
+}
+
+/** The mission view inside another screen (the home page): follows that screen's mission-day selector. */
+export function MissionOrbitEmbedded({ geometry, story }: Pick<MissionView, "geometry" | "story">) {
+  const mission = useMissionDay();
+  if (!mission) return null;
+  const { data, day, onChange } = mission;
+  return <MissionConsole data={data} geometry={geometry} story={story} day={clampDay(day, geometry.total)} onDayChange={onChange} embedded />;
+}
+
+/** Interactive mission view: day selector (standalone only), 3D scene, Earth-link readout, story, and crew readings. */
+function MissionConsole({ data, geometry, story, day, onDayChange, embedded }: MissionConsoleProps) {
+  const total = geometry.total;
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<30 | 90>(30);
   const [viewChoice, setViewChoice] = useState<ViewChoice>("auto");
@@ -69,12 +89,12 @@ export function MissionOrbitBoard({ data, geometry, story }: MissionView) {
 
   // Shareable deep link: once the visitor has picked a day, keep it in the address bar.
   useEffect(() => {
-    if (playing || !touched.current) return;
+    if (embedded || playing || !touched.current) return;
     const url = new URL(window.location.href);
     if (url.searchParams.get("day") === String(day)) return;
     url.searchParams.set("day", String(day));
     window.history.replaceState(null, "", url);
-  }, [day, playing]);
+  }, [day, playing, embedded]);
 
   // Time-lapse: advance the day at a steady rate and rest briefly on each story beat.
   useEffect(() => {
@@ -100,7 +120,7 @@ export function MissionOrbitBoard({ data, geometry, story }: MissionView) {
             holdUntil = now + BEAT_HOLD_MS * (30 / speed);
           }
           dayRef.current = next;
-          setDay(next);
+          onDayChange(next);
           if (next >= total) {
             setPlaying(false);
             return;
@@ -111,19 +131,19 @@ export function MissionOrbitBoard({ data, geometry, story }: MissionView) {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [playing, speed, total, beatDays]);
+  }, [playing, speed, total, beatDays, onDayChange]);
 
   const selectDay = (next: number) => {
     touched.current = true;
     setPlaying(false);
-    setDay(clampDay(next, total));
+    onDayChange(clampDay(next, total));
   };
 
   const togglePlay = () => {
     touched.current = true;
     if (!playing && day >= total) {
       dayRef.current = 1;
-      setDay(1);
+      onDayChange(1);
     }
     setPlaying(!playing);
   };
@@ -145,7 +165,7 @@ export function MissionOrbitBoard({ data, geometry, story }: MissionView) {
 
   return (
     <div id="mission-orbit-board" data-selected-day={day} data-comm={geometry.comm[day - 1]} data-phase={phase ?? ""} data-playing={playing}>
-      <MissionDaySelector days={data.days} events={data.events} crew={PROFILES} value={day} onChange={selectDay} />
+      {embedded ? null : <MissionDaySelector days={data.days} events={data.events} crew={PROFILES} value={day} onChange={selectDay} />}
 
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(280px,340px)] items-start gap-4 max-md:grid-cols-1">
         <Panel id="orbit-panel" aria-labelledby="orbit-title">

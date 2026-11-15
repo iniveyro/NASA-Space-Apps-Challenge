@@ -120,7 +120,7 @@ export function CrewCard({ person, day, reading, heartRateTrend, events }: CrewC
           </span>
         </span>
         <span aria-hidden="true" className="mt-3.25 flex items-center justify-between border-t border-console-divider pt-2.5 text-caption font-semibold text-console-faint">
-          Open profile <span className="text-lg">→</span>
+          Open profile · 3D body <span className="text-lg">→</span>
         </span>
       </Link>
     </article>
