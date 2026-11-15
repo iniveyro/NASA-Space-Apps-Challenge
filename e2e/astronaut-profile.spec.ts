@@ -1,6 +1,6 @@
 import { METRICS, PROFILES } from "../src/features/crew-health-data";
 import { expect, test } from "./fixtures";
-import { DATA, TOTAL, UNRECORDED, datasetValue, daySelector, selectDay } from "./mission-dataset";
+import { DATA, TOTAL, datasetValue, daySelector, selectDay } from "./mission-dataset";
 import type { Page } from "@playwright/test";
 
 const metricValue = (page: Page, metricId: string) => page.locator(`[data-metric='${metricId}'] .metric-value`).filter({ visible: true });
@@ -26,10 +26,8 @@ test.describe("astronaut profile", () => {
       await expect(page.locator("#readings-title")).toHaveText("Latest readings");
       await expect(page.getByText("Fictional point readings · 12 Jun 2029")).toBeVisible();
       await expectMetricsMatchDay(page, person.id, TOTAL);
-      for (const metricId of UNRECORDED) {
-        await expect(metricValue(page, metricId)).toHaveText("Unknown");
-        await expect(page.locator(`[data-metric='${metricId}']`)).toHaveAttribute("data-status", "unknown");
-        await expect(page.locator(`[data-metric='${metricId}'] .metric-status`)).toHaveText("Unknown");
+      for (const metricId of ["spo2", "activity", "stress"]) {
+        await expect(metricValue(page, metricId)).not.toHaveText("Unknown");
       }
       await expect(page.locator("#metric-grid")).not.toContainText(/NaN|undefined/);
     });
@@ -47,9 +45,22 @@ test.describe("astronaut profile", () => {
     await expect(page.locator("#chart-metric-title")).toHaveText("Blood pressure");
 
     await page.locator("[data-metric='spo2']").click();
-    await expect(page.locator("#metric-reference")).toContainText("SpO₂ · Unknown");
-    await expect(page.locator("#metric-reference")).toHaveAttribute("data-status", "unknown");
+    await expect(page.locator("#metric-reference")).toContainText("SpO₂ · Reference");
+    await expect(page.locator("#metric-reference")).toContainText(`${datasetValue("kanji", "spo2", TOTAL)} %`);
+    await expect(page.locator("#metric-reference")).toHaveAttribute("data-status", "within-demo-reference");
     await expect(page.locator("#metric-reference")).not.toContainText(/NaN|undefined/);
+  });
+
+  test("Inés's SpO₂ reads as an authored alert during the surface EVA on day 518", async ({ page }) => {
+    await page.goto("/astronaut/ines?day=518");
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "518");
+    await expect(metricValue(page, "spo2")).toContainText("89");
+    await expect(page.locator("[data-metric='spo2']")).toHaveAttribute("data-status", "demo-alert");
+    await expect(page.locator("[data-metric='spo2'] .metric-status")).toHaveText("Alert");
+    await expectMetricsMatchDay(page, "ines", 518);
+
+    await page.goto("/astronaut/ines?day=519");
+    await expect(page.locator("[data-metric='spo2']")).toHaveAttribute("data-status", "within-demo-reference");
   });
 
   test("authored states follow the mission day on Sofía's blood pressure and Kanji's heart rate", async ({ page }) => {

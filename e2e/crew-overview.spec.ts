@@ -243,7 +243,7 @@ test.describe("crew overview", () => {
 
   test("event markers jump to scenario days and show authored states", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("[data-event-day]")).toHaveCount(3);
+    await expect(page.locator("[data-event-day]")).toHaveCount(4);
     await expect(async () => {
       await page.locator("[data-event-day='120']").click();
       await expect(selector(page)).toHaveAttribute("data-selected-day", "120", { timeout: 500 });
@@ -265,6 +265,11 @@ test.describe("crew overview", () => {
     const statuses = await page.locator("[data-metric-readout='radiation']").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-status")));
     expect(statuses).toEqual(["demo-deviation", "demo-deviation", "demo-deviation", "demo-deviation"]);
     await expect(page.locator(".crew-card .metric-status").filter({ hasText: "Deviation" })).toHaveCount(4);
+
+    await page.locator("[data-event-day='518']").click();
+    await expect(selector(page)).toHaveAttribute("data-selected-day", "518");
+    await expect(card(page, "ines").locator("[data-crew-event='spo2_alert']")).toContainText("SpO₂ alert");
+    await expect(card(page, "ines").locator("[data-crew-event='spo2_alert']")).toContainText("during surface EVA");
   });
 
   test("the phase band and legend are clickable and phases are distinguishable", async ({ page }) => {

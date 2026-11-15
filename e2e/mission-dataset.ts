@@ -19,9 +19,6 @@ const csv = (name: string) => readFileSync(path.join(process.cwd(), "data", "pro
 export const DATA = buildMissionDataset(parseTimeline(csv("mission_timeline.csv")), parseCrewDaily(csv("crew_daily.csv")), parseEvents(csv("crew_events.csv")));
 export const TOTAL = DATA.days.length;
 
-/** Metrics the mission dataset does not record; the interface shows them as "Unknown". */
-export const UNRECORDED: readonly MetricId[] = ["spo2", "activity", "stress"];
-
 /** Formatted dataset value of one metric for a crew member on a mission day. */
 export function datasetValue(crewId: string, metricId: MetricId, day: number): string {
   return formatValue(metricId, metricReading(readingFor(DATA, crewId, day), metricId));

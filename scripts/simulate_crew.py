@@ -1,9 +1,12 @@
 """Simulated daily crew health series for the UMBRAL demo (no hardware).
 x[t] = baseline + sigma * N(0,1) + event(t); fixed seed so the demo is repeatable.
 Baselines marked ASSUMED are team choices; glucose baseline = mean of the three Inspiration4 pre-flight samples (L-92, L-44, L-3) CMP, NASA OSDR OSD-575.
+Activity minutes, SpO2 and RR intervals use their own generator (seed 2027) so the original series keep their values.
+RR intervals: N_BEATS beats per day, mean 60000/HR ms, sd RMSSD/sqrt(2) (successive differences of iid beats).
 Output: data/processed/crew_daily.csv, data/processed/crew_events.csv"""
-import csv, json, random
+import csv, json, math, random
 random.seed(2026)
+VIT = random.Random(2027)   # activity, SpO2 + RR intervals, independent of the original series
 T = json.load(open('data/processed/mission_timeline.json'))
 # Inspiration4 pre-flight glucose (mg/dL): mean of L-92, L-44, L-3 per crew C001-C004
 cmp = list(csv.DictReader(open('data/raw/osdr/OSD-575_LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv', encoding='utf-8-sig')))
@@ -20,6 +23,13 @@ CREW = {  # hr bpm, sbp/dbp mmHg, temp C, sleep h, rmssd ms, prior dose mSv  (AS
 SIG = dict(hr=3, sbp=5, dbp=4, temp=0.15, sleep=0.5, rmssd=6, glu=5, mood=0.4)   # ASSUMED day-to-day variation
 EVA_STORM = {'Ines', 'Sofia'}   # on the surface walk during the 2028-03-20 storm (plot)
 STORM_MGY = 8.1                 # MSL RAD, 2024-05-20 event (NASA/JPL 2024)
+SPO2 = dict(Ines=98, Kanji=97, Malik=98, Sofia=98)   # ASSUMED resting point-reading baselines (%)
+SPO2_SIG = 0.6                  # ASSUMED day-to-day variation
+ACTIVITY = dict(Ines=45, Kanji=40, Malik=35, Sofia=50)   # ASSUMED logged exercise minutes per day
+ACTIVITY_SIG = 10               # ASSUMED day-to-day variation (min)
+REST_DAY_P = 0.12               # ASSUMED chance of a day with no logged exercise
+N_BEATS = 30                    # RR window per day; the stress index needs at least 20 beats
+SPO2_EVENT = dict(crew='Ines', day=518, value=89)   # surface EVA after the solar storm (authored scenario)
 daily, events = [], []
 for name, c in CREW.items():
     dose = c['prior']
@@ -36,11 +46,22 @@ for name, c in CREW.items():
             add = STORM_MGY if name in EVA_STORM else STORM_MGY/2   # ASSUMED: habitat refuge halves the dose
             dose += add   # protons, Q ~ 1 -> mGy ~ mSv (approximation)
             events.append(dict(day=d, date=r['date'], crew=name, event='solar_storm', detail=f'event dose {add:.1f} mSv ({"EVA" if name in EVA_STORM else "refuge"})'))
+        hr, rmssd = round(x['hr']), round(x['rmssd'])
+        on_eva = name == SPO2_EVENT['crew'] and d == SPO2_EVENT['day']
+        resting = not on_eva and (VIT.random() < REST_DAY_P or ev == 'viral_reactivation' or (d == 493 and name not in EVA_STORM))
+        activity = 0 if resting else max(5, round(ACTIVITY[name] + VIT.gauss(0, ACTIVITY_SIG)))
+        spo2 = min(100, max(95, round(SPO2[name] + VIT.gauss(0, SPO2_SIG))))
+        rr_sd = max(rmssd, 5) / math.sqrt(2)
+        rr = [round(60000 / hr + VIT.gauss(0, rr_sd)) for _ in range(N_BEATS)]
+        if on_eva:   # O2 saturation drop during an EVA
+            events.append(dict(day=d, date=r['date'], crew=name, event='spo2_alert',
+                               detail=f"SpO2 point reading {spo2} -> {SPO2_EVENT['value']} % during surface EVA"))
+            spo2 = SPO2_EVENT['value']; ev = 'spo2_alert'
         dose += 1.84 if r['phase'] in ('transit_out', 'transit_return') else (0.64 if r['phase'] in ('surface', 'mars_arrival') else (1.84 if r['phase'] == 'mars_departure' else 0))
-        daily.append(dict(day=d, date=r['date'], crew=name, hr_rest_bpm=round(x['hr']), sbp_mmHg=round(x['sbp']), dbp_mmHg=round(x['dbp']),
-                          temp_C=round(x['temp'], 1), sleep_h=round(max(x['sleep'], 2), 1), hrv_rmssd_ms=round(x['rmssd']),
-                          glucose_mg_dL=round(x['glu']), mood_1to5=min(5, max(1, round(x['mood']))), dose_cum_mSv=round(dose, 1),
-                          comm=r['comm'], event=ev))
+        daily.append(dict(day=d, date=r['date'], crew=name, hr_rest_bpm=hr, sbp_mmHg=round(x['sbp']), dbp_mmHg=round(x['dbp']),
+                          temp_C=round(x['temp'], 1), sleep_h=round(max(x['sleep'], 2), 1), hrv_rmssd_ms=rmssd,
+                          glucose_mg_dL=round(x['glu']), spo2_pct=spo2, activity_min=activity, mood_1to5=min(5, max(1, round(x['mood']))), dose_cum_mSv=round(dose, 1),
+                          comm=r['comm'], event=ev, rr_ms=' '.join(map(str, rr))))
         if name == 'Kanji' and d == 120:
             events.append(dict(day=d, date=r['date'], crew=name, event='viral_reactivation', detail='rest HR 48->78, T +0.6 C, low HRV, 5 h sleep (days 120-122)'))
 # Orthostatic test on arrival (day 211): supine vs 3 min standing

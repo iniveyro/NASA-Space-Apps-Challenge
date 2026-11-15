@@ -8,7 +8,7 @@ export const REGION_METRICS: Readonly<Record<BodyRegion, readonly MetricId[]>> =
 
 export const REGION_DESCRIPTIONS: Readonly<Record<BodyRegion, string>> = {
   heart: "Heart-associated readings: heart rate and blood pressure.",
-  brain: "Brain-associated self-reports: sleep, mood, and stress.",
+  brain: "Brain-associated signals: self-reported sleep and mood, and the computed stress index.",
   body: "Whole-body signals: temperature, activity, SpO₂, glucose, and radiation.",
 };
 

@@ -25,9 +25,15 @@ describe("trend chart geometry", () => {
   });
 
   it("uses 'of 5' units for self-reported scales", () => {
+    const mood = getMetric("mood")!;
+    const point = getSeries("malik", "mood", 7).at(-1)!;
+    expect(pointTooltip(mood, point)).toBe("Jun 12 · Mood: 4 of 5");
+  });
+
+  it("shows the computed stress index with its SI unit", () => {
     const stress = getMetric("stress")!;
     const point = getSeries("malik", "stress", 7).at(-1)!;
-    expect(pointTooltip(stress, point)).toBe("Jun 12 · Stress: 1 of 5");
+    expect(pointTooltip(stress, point)).toBe("Jun 12 · Stress index: 157 SI");
   });
 
   it("keeps only complete finite readings from an external series", () => {

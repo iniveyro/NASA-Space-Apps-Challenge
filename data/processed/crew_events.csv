@@ -8,3 +8,4 @@ day,date,crew,event,detail
 493,2028-03-20,Kanji,solar_storm,event dose 4.0 mSv (refuge)
 493,2028-03-20,Malik,solar_storm,event dose 4.0 mSv (refuge)
 493,2028-03-20,Sofia,solar_storm,event dose 8.1 mSv (EVA)
+518,2028-04-14,Ines,spo2_alert,SpO2 point reading 99 -> 89 % during surface EVA

@@ -34,7 +34,7 @@ export function pointTooltip(metric: Metric, point: SeriesPoint): string {
     return `${formatShortDate(point.date)} · Systolic: ${point.value.systolic} mmHg · Diastolic: ${point.value.diastolic} mmHg`;
   }
   const value = formatValue(metric.id, point.value);
-  const unit = metric.id === "mood" || metric.id === "stress" ? "of 5" : metric.unit;
+  const unit = metric.id === "mood" ? "of 5" : metric.unit;
   return `${formatShortDate(point.date)} · ${metric.label}: ${value} ${unit}`;
 }
 

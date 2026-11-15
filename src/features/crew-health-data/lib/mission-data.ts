@@ -13,7 +13,7 @@ import type {
   MissionDay,
 } from "./types";
 
-const SERIES_FIELDS: readonly CrewSeriesField[] = ["heartRate", "systolic", "diastolic", "temperature", "sleep", "mood", "glucose", "radiation"];
+const SERIES_FIELDS: readonly CrewSeriesField[] = ["heartRate", "systolic", "diastolic", "temperature", "sleep", "mood", "glucose", "activity", "spo2", "stress", "radiation"];
 
 function emptySeries(length: number): CrewSeries {
   const series = Object.fromEntries(SERIES_FIELDS.map((field) => [field, Array<number | null>(length).fill(null)])) as Record<CrewSeriesField, (number | null)[]>;
@@ -62,6 +62,9 @@ export function metricReading(reading: CrewDayReading | null, metricId: MetricId
     case "sleep":
     case "mood":
     case "glucose":
+    case "activity":
+    case "spo2":
+    case "stress":
     case "radiation":
       return finite(reading[metricId]);
     default:
@@ -82,8 +85,11 @@ export function eventsOn(data: MissionDataset, day: number, crewId?: string): Cr
   return data.events.filter((event) => event.day === day && (crewId === undefined || event.crewId === crewId));
 }
 
+const EVENT_LABELS: Readonly<Record<string, string>> = { spo2_alert: "SpO₂ alert" };
+
 /** "orthostatic_test" → "Orthostatic test". */
 export function eventLabel(code: string): string {
+  if (EVENT_LABELS[code]) return EVENT_LABELS[code];
   const words = code.replace(/[_-]+/g, " ").trim();
   return words ? words[0].toUpperCase() + words.slice(1) : "Event";
 }

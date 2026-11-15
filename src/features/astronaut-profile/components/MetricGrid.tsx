@@ -19,7 +19,7 @@ export function MetricGrid({ readings, selectedMetricId, onSelect }: MetricGridP
       {readings.map((reading) => {
         const { metric, formatted, scenario } = reading;
         const known = formatted !== "Unknown";
-        const unit = metric.id === "mood" || metric.id === "stress" ? "of 5" : metric.unit;
+        const unit = metric.id === "mood" ? "of 5" : metric.unit;
         const pressed = metric.id === selectedMetricId;
         return (
           <button

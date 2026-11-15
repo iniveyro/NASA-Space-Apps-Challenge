@@ -21,6 +21,8 @@ export const DAY_SCENARIOS: readonly AuthoredDayScenario[] = [
   { crewId: "sofia", metricId: "bloodPressure", fromDay: 211, toDay: 211, status: "demo-alert" },
   // Solar storm scenario: event dose added to the cumulative total.
   { crewId: "*", metricId: "radiation", fromDay: 493, toDay: 493, status: "demo-deviation" },
+  // SpO₂ alert scenario: Inés's point reading during a surface EVA after the solar storm.
+  { crewId: "ines", metricId: "spo2", fromDay: 518, toDay: 518, status: "demo-alert" },
 ];
 
 const LABELS: Readonly<Record<ScenarioStatus | "unknown", string>> = {
