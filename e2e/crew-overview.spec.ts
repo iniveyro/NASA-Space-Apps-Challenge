@@ -14,6 +14,7 @@ import {
 } from "../src/features/crew-health-data";
 import type { Page } from "@playwright/test";
 import { expect, expectNoHorizontalOverflow, test } from "./fixtures";
+import { daySelector, selectDay as selectVisibleDay } from "./mission-dataset";
 
 const csv = (name: string) => readFileSync(path.join(process.cwd(), "data", "processed", name), "utf-8");
 const DATA = buildMissionDataset(parseTimeline(csv("mission_timeline.csv")), parseCrewDaily(csv("crew_daily.csv")), parseEvents(csv("crew_events.csv")));
@@ -346,5 +347,64 @@ test.describe("crew overview", () => {
     await page.getByRole("link", { name: `Open ${third.name} profile` }).focus();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { level: 1, name: third.name })).toBeVisible();
+  });
+
+  test("the Latest button returns to the last mission day", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#mission-day-latest")).toBeDisabled();
+    await selectDay(page, 211);
+    await expect(page.locator("#mission-day-latest")).toBeEnabled();
+    await page.getByRole("button", { name: "Back to latest day" }).click();
+    await expect(selector(page)).toHaveAttribute("data-selected-day", String(TOTAL));
+    await expect(page.locator("#mission-day-latest")).toBeDisabled();
+    await expect(page.locator("#mission-day-next")).toBeDisabled();
+    await expectCardsMatchDay(page, TOTAL);
+  });
+
+  test("a card opens its profile on the selected mission day", async ({ page }) => {
+    await page.goto("/");
+    for (const person of PROFILES) {
+      await expect(card(page, person.id).locator("[data-profile-route]")).toHaveAttribute("href", `/astronaut/${person.id}`);
+    }
+    await selectDay(page, 211);
+    for (const person of PROFILES) {
+      await expect(card(page, person.id).locator("[data-profile-route]")).toHaveAttribute("href", `/astronaut/${person.id}?day=211`);
+    }
+    await page.getByRole("link", { name: "Open Sofía profile" }).click();
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=211$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Sofía" })).toBeVisible();
+    // The home page stays in the document (hidden) after the navigation, so match the visible selector.
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "211");
+    await expect(page.locator("[data-metric='bloodPressure']")).toHaveAttribute("data-status", "demo-alert");
+    await expect(page.locator("[data-metric='bloodPressure'] .metric-value")).toContainText(formatValue("bloodPressure", metricReading(readingFor(DATA, "sofia", 211), "bloodPressure")));
+  });
+
+  test("opening a profile again from another mission day shows that day", async ({ page }) => {
+    const heartRate = (day: number) => formatValue("heartRate", metricReading(readingFor(DATA, "sofia", day), "heartRate"));
+    const profileHeartRate = page.locator("[data-metric='heartRate'] .metric-value").filter({ visible: true });
+    await page.goto("/");
+    await selectVisibleDay(page, 211);
+    await page.getByRole("link", { name: "Open Sofía profile" }).click();
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=211$/);
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "211");
+
+    await page.getByRole("link", { name: "← Back to crew overview" }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await selectVisibleDay(page, 120);
+    await page.getByRole("link", { name: "Open Sofía profile" }).click();
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=120$/);
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "120");
+    await expect(page.getByRole("heading", { level: 2, name: "Day 120 readings" })).toBeVisible();
+    await expect(profileHeartRate).toContainText(heartRate(120));
+
+    // Back and forward return to the day left in the address bar.
+    await selectVisibleDay(page, 300);
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=300$/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/$/);
+    await page.goForward();
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=300$/);
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "300");
+    await expect(profileHeartRate).toContainText(heartRate(300));
   });
 });

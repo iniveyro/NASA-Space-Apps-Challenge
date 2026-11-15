@@ -45,6 +45,7 @@ function CrewGrid({ data, day, description }: { data: MissionDataset; day: numbe
               key={person.id}
               person={person}
               day={day}
+              latestDay={data.days.length}
               reading={reading}
               trends={{
                 heartRate: [{ label: "heart rate", values: seriesWindow(data, person.id, "heartRate", day, 7) }],

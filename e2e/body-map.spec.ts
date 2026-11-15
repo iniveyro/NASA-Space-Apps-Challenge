@@ -24,12 +24,15 @@ test.describe("body map", () => {
 
   test("selecting a metric highlights its region", async ({ page }) => {
     await page.goto("/astronaut/kanji");
-    await page.locator("[data-metric='stress']").click();
+    await page.locator("[data-metric='mood']").click();
     await expect(page.locator("[data-region='brain']")).toHaveAttribute("aria-pressed", "true");
+    // A metric the mission dataset does not record still navigates to its region.
+    await page.locator("[data-metric='spo2']").click();
+    await expect(page.locator("[data-region='body']")).toHaveAttribute("aria-pressed", "true");
   });
 
-  test("region buttons carry the authored demo state of their grouped signals", async ({ page }) => {
-    await page.goto("/astronaut/sofia");
+  test("region buttons carry the authored demo state of their grouped signals on the selected day", async ({ page }) => {
+    await page.goto("/astronaut/sofia?day=211");
     await expect(page.locator("[data-region='heart']")).toHaveAttribute("data-state", "demo-alert");
     await expect(page.locator("[data-region='brain']")).toHaveAttribute("data-state", "within-demo-reference");
     await expect(page.locator("[data-region='body']")).toHaveAttribute("data-state", "within-demo-reference");
@@ -39,17 +42,32 @@ test.describe("body map", () => {
     await expect(page.locator("#body-region-state")).toContainText("Alert: Blood pressure");
     await expect(page.locator("#body-region-state")).toContainText("Authored demo state.");
 
-    await page.goto("/astronaut/kanji");
-    await expect(page.locator("[data-region='heart']")).toHaveAttribute("data-state", "demo-deviation");
+    await page.goto("/astronaut/kanji?day=120");
+    await expect(page.locator("[data-region='heart']")).toHaveAttribute("data-state", "demo-alert");
+    await page.goto("/astronaut/kanji?day=493");
+    await expect(page.locator("[data-region='heart']")).toHaveAttribute("data-state", "within-demo-reference");
+    await expect(page.locator("[data-region='body']")).toHaveAttribute("data-state", "demo-deviation");
     await page.goto("/astronaut/ines");
     for (const region of ["brain", "heart", "body"]) {
       await expect(page.locator(`[data-region='${region}']`)).toHaveAttribute("data-state", "within-demo-reference");
     }
   });
 
+  test("region states follow the mission-day selector", async ({ page }) => {
+    await page.goto("/astronaut/sofia");
+    await expect(page.locator("[data-region='heart']")).toHaveAttribute("data-state", "within-demo-reference");
+    await expect(async () => {
+      await page.locator("[data-event-day='211']").click();
+      await expect(page.locator("#mission-day-selector")).toHaveAttribute("data-selected-day", "211", { timeout: 500 });
+    }).toPass();
+    await expect(page.locator("[data-region='heart']")).toHaveAttribute("data-state", "demo-alert");
+    await page.locator("#mission-day-latest").click();
+    await expect(page.locator("[data-region='heart']")).toHaveAttribute("data-state", "within-demo-reference");
+  });
+
   test("shows the 3D figure where WebGL exists and keeps the 2D silhouette available", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto("/astronaut/sofia");
+    await page.goto("/astronaut/sofia?day=211");
     const panel = page.locator(".body-panel");
     const stage = page.locator("#body-stage");
     if (!(await supportsWebgl(page))) {
