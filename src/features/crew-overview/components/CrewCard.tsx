@@ -3,6 +3,7 @@ import {
   formatValue,
   getMetric,
   metricReading,
+  profileHref,
   resolveDayScenario,
   type CrewDayReading,
   type MetricId,
@@ -25,13 +26,15 @@ export interface CrewCardEvent {
 interface CrewCardProps {
   person: Profile;
   day: number;
+  /** Last mission day; the profile link carries `day` only when it is another day. */
+  latestDay: number;
   reading: CrewDayReading | null;
   /** Mission-history values for the metric tiles, ending at `day`. */
   trends: Partial<Record<MetricId, readonly MiniChartSeries[]>>;
   events: readonly CrewCardEvent[];
 }
 
-function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProps, "events"> & { metricId: MetricId }) {
+function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProps, "events" | "latestDay"> & { metricId: MetricId }) {
   const metric = getMetric(metricId)!;
   const value = metricReading(reading, metricId);
   const formatted = formatValue(metricId, value);
@@ -69,15 +72,15 @@ function VitalTile({ person, day, reading, metricId, trends }: Omit<CrewCardProp
   );
 }
 
-/** Neutral crew summary card for the selected mission day. The whole card is a single link to the astronaut profile. */
-export function CrewCard({ person, day, reading, trends, events }: CrewCardProps) {
+/** Neutral crew summary card for the selected mission day. The whole card is a single link to the astronaut profile on that day. */
+export function CrewCard({ person, day, latestDay, reading, trends, events }: CrewCardProps) {
   return (
     <article
       data-crew={person.id}
       className="crew-card min-w-0 rounded-2xl border border-border bg-surface-muted p-0 text-text-strong shadow-card max-sm:p-4.25 lg:max-xl:p-4"
     >
       <Link
-        href={`/astronaut/${person.id}`}
+        href={profileHref(person.id, day, latestDay)}
         aria-label={`Open ${person.name} profile`}
         data-profile-route={person.id}
         className="crew-card-action block h-full w-full rounded-2xl bg-surface-muted p-4.5 text-left text-current no-underline hover:bg-surface"

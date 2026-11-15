@@ -6,6 +6,7 @@ import {
   formatValue,
   getMetric,
   metricReading,
+  profileHref,
   readingFor,
   resolveDayScenario,
   type MetricId,
@@ -39,7 +40,7 @@ export function CrewDayPanel({ data, day, linkNote, className }: CrewDayPanelPro
           return (
             <li key={person.id} data-crew-row={person.id} className="min-w-0 border-t border-divider pt-2.5">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                <Link href={`/astronaut/${person.id}`} className="text-body font-bold text-text-strong underline-offset-3 hover:text-primary-strong">
+                <Link href={profileHref(person.id, day, data.days.length)} className="text-body font-bold text-text-strong underline-offset-3 hover:text-primary-strong">
                   {person.name}
                 </Link>
                 <span className="text-caption text-muted">{person.role}</span>
