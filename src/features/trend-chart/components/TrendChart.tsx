@@ -1,15 +1,17 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { getSeries, type Metric, type Profile } from "@/features/crew-health-data";
+import { getSeries, type Metric, type Profile, type SeriesPoint } from "@/features/crew-health-data";
 import { formatShortDate } from "@/shared/lib/format-date";
 import { cn } from "@/shared/lib/cn";
-import { CHART, PLOT_HEIGHT, buildScales, chartValues, formatTick, nearestIndex, pointTooltip } from "../lib/chart-geometry";
+import { CHART, PLOT_HEIGHT, buildScales, chartValues, formatTick, nearestIndex, plottablePoints, pointTooltip } from "../lib/chart-geometry";
 
 interface TrendChartProps {
   person: Profile;
   metric: Metric;
   days: 7 | 30;
+  /** History to plot instead of the profile's generated one. Points without a complete reading are skipped. */
+  series?: readonly SeriesPoint[];
 }
 
 interface TooltipState {
@@ -22,14 +24,14 @@ const SERIES_STROKE = ["stroke-chart-primary", "stroke-chart-secondary"] as cons
 const SERIES_FILL = ["fill-chart-primary", "fill-chart-secondary"] as const;
 
 /** SVG history chart for one metric. Pointer, touch, and keyboard show the nearest reading. */
-export function TrendChart({ person, metric, days }: TrendChartProps) {
+export function TrendChart({ person, metric, days, series }: TrendChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const lastTouchAt = useRef(-Infinity);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [position, setPosition] = useState({ left: 0, top: 0 });
 
-  const data = getSeries(person.id, metric.id, days);
+  const data = series ? plottablePoints(metric, series) : getSeries(person.id, metric.id, days);
   const { x, y, ticks, min } = buildScales(metric, data);
   const { width, height, left, right, top } = CHART;
   const seriesCount = metric.id === "bloodPressure" ? 2 : 1;
@@ -48,6 +50,14 @@ export function TrendChart({ person, metric, days }: TrendChartProps) {
       top: Math.max(4, localY - element.offsetHeight - 10),
     });
   }, [tooltip]);
+
+  if (data.length === 0) {
+    return (
+      <p id="chart-empty" role="status" className="mt-2.5 mb-0 grid min-h-40 place-items-center rounded-md border border-border bg-surface-subtle px-4 py-6 text-center text-body text-muted">
+        No readings recorded for this metric in the mission dataset.
+      </p>
+    );
+  }
 
   const showAt = (clientX: number, clientY: number) => {
     const rect = svgRef.current?.getBoundingClientRect();

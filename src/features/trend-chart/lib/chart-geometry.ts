@@ -10,6 +10,15 @@ export function chartValues(metric: Metric, value: MetricReading): number[] {
   return [value as number];
 }
 
+/** Points the chart can draw: a complete finite reading of the metric's shape. Gaps are dropped, never plotted as zero. */
+export function plottablePoints(metric: Metric, points: readonly SeriesPoint[]): SeriesPoint[] {
+  return points.filter(({ value }) =>
+    metric.id === "bloodPressure"
+      ? isBloodPressure(value) && Number.isFinite(value.systolic) && Number.isFinite(value.diastolic)
+      : typeof value === "number" && Number.isFinite(value),
+  );
+}
+
 export function niceTicks(min: number, max: number, count: number): number[] {
   if (min === max) return [min];
   return Array.from({ length: count }, (_, index) => max - ((max - min) * index) / (count - 1));
@@ -25,12 +34,12 @@ export function pointTooltip(metric: Metric, point: SeriesPoint): string {
     return `${formatShortDate(point.date)} · Systolic: ${point.value.systolic} mmHg · Diastolic: ${point.value.diastolic} mmHg`;
   }
   const value = formatValue(metric.id, point.value);
-  const unit = metric.id === "mood" || metric.id === "stress" ? "of 5" : metric.unit;
+  const unit = metric.id === "mood" ? "of 5" : metric.unit;
   return `${formatShortDate(point.date)} · ${metric.label}: ${value} ${unit}`;
 }
 
 /** Computes the y domain and scale functions exactly as the legacy chart did. */
-export function buildScales(metric: Metric, data: SeriesPoint[]) {
+export function buildScales(metric: Metric, data: readonly SeriesPoint[]) {
   const values = data.flatMap((point) => chartValues(metric, point.value));
   let min = Math.min(...values);
   let max = Math.max(...values);

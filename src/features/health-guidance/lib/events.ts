@@ -20,6 +20,18 @@ function validReading(value: unknown): boolean {
     typeof value.diastolic === "number" && Number.isFinite(value.diastolic);
 }
 
+type MissionContextShape = { missionDay?: unknown; missionDate?: unknown; scenarioKey?: unknown };
+
+function validMissionContext(value: MissionContextShape): boolean {
+  return (value.missionDay === undefined || (typeof value.missionDay === "number" && Number.isInteger(value.missionDay) && value.missionDay > 0)) &&
+    (value.missionDate === undefined || (typeof value.missionDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.missionDate) && Number.isFinite(Date.parse(`${value.missionDate}T00:00:00Z`)))) &&
+    (value.scenarioKey === undefined || (typeof value.scenarioKey === "string" && value.scenarioKey.length > 0));
+}
+
+function sameMissionContext(left: MissionContextShape, right: MissionContextShape): boolean {
+  return left.missionDay === right.missionDay && left.missionDate === right.missionDate && left.scenarioKey === right.scenarioKey;
+}
+
 function validEvaluation(value: unknown): value is GuidanceEvaluation {
   if (!isRecord(value)) return false;
   const statuses = ["normal", "warning", "critical", "unknown"];
@@ -32,7 +44,7 @@ function validEvaluation(value: unknown): value is GuidanceEvaluation {
     isTimestamp(value.evaluatedAt) && Array.isArray(value.symptoms) && value.symptoms.every((item) => ["trouble-breathing", "chest-pain", "fainting", "confusion"].includes(String(item))) &&
     ["fixture", "scenario", "user"].includes(String(value.source)) && ["awake", "sleeping", "unknown"].includes(String(value.activityState)) &&
     typeof value.safetyEscalation === "boolean" && typeof value.environmentalEvent === "boolean" && value.isSimulated === true &&
-    (value.scenarioId === undefined || ["sleep-short", "respiratory-symptoms", "radiation-event"].includes(String(value.scenarioId)));
+    (value.scenarioId === undefined || ["sleep-short", "respiratory-symptoms", "radiation-event"].includes(String(value.scenarioId))) && validMissionContext(value);
 }
 
 function validContextAudit(value: unknown): value is GuidanceContextAudit {
@@ -58,7 +70,7 @@ export function isGuidanceEvent(value: unknown): value is GuidanceEvent {
     typeof followUp.readingId === "string" && validReading(followUp.value) && typeof followUp.unit === "string" &&
     isTimestamp(followUp.timestamp) && validEvaluation(followUp.evaluation) && followUp.readingId === followUp.evaluation.readingId &&
     followUp.astronautId === initial.astronautId && followUp.metricId === initial.metricId && followUp.metricId === value.metricId &&
-    followUp.evaluation.astronautId === followUp.astronautId && followUp.evaluation.metricId === followUp.metricId &&
+    followUp.evaluation.astronautId === followUp.astronautId && followUp.evaluation.metricId === followUp.metricId && sameMissionContext(followUp.evaluation, initial) &&
     followUp.timestamp === followUp.evaluation.timestamp && followUp.unit === followUp.evaluation.unit && valuesMatch(followUp.value, followUp.evaluation.value));
   const resolution = value.resolution;
   const latestFollowUp = Array.isArray(value.followUps) ? value.followUps.at(-1) : undefined;
@@ -66,6 +78,7 @@ export function isGuidanceEvent(value: unknown): value is GuidanceEvent {
   return typeof value.id === "string" && value.astronautId === initial.astronautId && value.astronautId === current.astronautId &&
     metricIsKnown && value.metricId === initial.metricId && value.metricId === current.metricId && typeof value.readingId === "string" &&
     value.readingId === initial.readingId && currentReadingExists && typeof initial.guideId === "string" && actionsAreValid && escalationsAreValid &&
+    validMissionContext(value) && sameMissionContext(value, initial) && sameMissionContext(value, current) &&
     Array.isArray(value.contextHistory) && value.contextHistory.every(validContextAudit) && followUpsAreValid &&
     isTimestamp(value.createdAt) && isTimestamp(value.updatedAt) &&
     (resolution === undefined || (isRecord(resolution) && typeof resolution.reason === "string" && resolution.reason.trim().length > 0 && isTimestamp(resolution.at)));
@@ -113,6 +126,7 @@ export function createEvent(evaluation: GuidanceEvaluation, now = new Date().toI
   return {
     id: `event-${evaluation.astronautId}-${evaluation.metricId}-${evaluation.readingId}`,
     astronautId: evaluation.astronautId, metricId: evaluation.metricId, readingId: evaluation.readingId, schemaVersion: 2,
+    missionDay: evaluation.missionDay, missionDate: evaluation.missionDate, scenarioKey: evaluation.scenarioKey,
     evaluation, currentEvaluation: evaluation, actions: [], escalations: [], contextHistory: [], followUps: [], createdAt: now, updatedAt: now,
   };
 }
@@ -137,6 +151,7 @@ export function recordFollowUp(event: GuidanceEvent, person: Profile, reading: N
   const evaluation = evaluateReading({
     person, metricId: reading.metricId, value: reading.value, unit: reading.unit, readingId, timestamp: reading.timestamp, now,
     source: "user", mode, symptoms, environmentalEvent: prior.environmentalEvent, activityState: prior.activityState,
+    scenarioId: prior.scenarioId, missionDay: prior.missionDay, missionDate: prior.missionDate, scenarioKey: prior.scenarioKey,
   });
   return {
     ...event, currentEvaluation: evaluation,
@@ -149,7 +164,9 @@ function evaluateContext(event: GuidanceEvent, person: Profile, symptoms: Sympto
   const prior = event.currentEvaluation;
   return evaluateReading({ person, metricId: event.metricId, value: prior.value, unit: prior.unit, readingId: prior.readingId,
     timestamp: prior.timestamp, referenceTime: prior.timestamp, now, source: prior.source, mode,
-    scenarioId: environmentalEvent ? undefined : prior.scenarioId, symptoms, environmentalEvent, activityState });
+    scenarioId: prior.scenarioId === "radiation-event" && !environmentalEvent ? undefined : prior.scenarioId,
+    missionDay: prior.missionDay, missionDate: prior.missionDate, scenarioKey: prior.scenarioKey,
+    symptoms, environmentalEvent, activityState });
 }
 
 export function reportSymptoms(event: GuidanceEvent, person: Profile, reported: SymptomId[], now = new Date().toISOString(), mode: GuidanceMode = "demo"): GuidanceEvent {

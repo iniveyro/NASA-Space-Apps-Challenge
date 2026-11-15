@@ -103,6 +103,12 @@ export interface CrewDayReading {
   sleep: number | null;
   mood: number | null;
   glucose: number | null;
+  /** Logged exercise minutes; 0 on a day without exercise. */
+  activity: number | null;
+  /** Simulated SpO₂ point reading in %. */
+  spo2: number | null;
+  /** Baevsky stress index computed on the server from the day's simulated RR intervals. */
+  stress: number | null;
   /** Cumulative mission dose in mSv: nondecreasing, not a rate, not a safe limit. */
   radiation: number | null;
   event: string | null;
@@ -117,7 +123,7 @@ export interface CrewEvent {
   detail: string;
 }
 
-export type CrewSeriesField = "heartRate" | "systolic" | "diastolic" | "temperature" | "sleep" | "mood" | "glucose" | "radiation";
+export type CrewSeriesField = "heartRate" | "systolic" | "diastolic" | "temperature" | "sleep" | "mood" | "glucose" | "activity" | "spo2" | "stress" | "radiation";
 
 /** Compact, serializable per-crew series: index `day - 1` holds that mission day's value. */
 export type CrewSeries = Record<CrewSeriesField, (number | null)[]> & { event: (string | null)[] };

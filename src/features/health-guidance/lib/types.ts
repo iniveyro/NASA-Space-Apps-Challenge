@@ -47,6 +47,10 @@ export interface GuidanceEvaluation {
   safetyEscalation: boolean;
   environmentalEvent: boolean;
   scenarioId?: DemoScenarioId;
+  /** Selected mission-data context; absent only on migrated pre-merge browser history. */
+  missionDay?: number;
+  missionDate?: string;
+  scenarioKey?: string;
 }
 
 export interface GuidanceActionAudit {
@@ -79,6 +83,10 @@ export interface GuidanceEvent {
   metricId: MetricId;
   readingId: string;
   schemaVersion: 2;
+  /** Mission context prevents a checklist or follow-up from crossing selected days/scenarios. */
+  missionDay?: number;
+  missionDate?: string;
+  scenarioKey?: string;
   /** Immutable first reading evaluation; never rewritten by later actions or context. */
   evaluation: GuidanceEvaluation;
   /** Latest reading/context projection; updated only by follow-up or explicit context review. */

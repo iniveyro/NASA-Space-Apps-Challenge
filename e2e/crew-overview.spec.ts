@@ -14,6 +14,7 @@ import {
 } from "../src/features/crew-health-data";
 import type { Page } from "@playwright/test";
 import { expect, expectNoHorizontalOverflow, test } from "./fixtures";
+import { daySelector, selectDay as selectVisibleDay } from "./mission-dataset";
 
 const csv = (name: string) => readFileSync(path.join(process.cwd(), "data", "processed", name), "utf-8");
 const DATA = buildMissionDataset(parseTimeline(csv("mission_timeline.csv")), parseCrewDaily(csv("crew_daily.csv")), parseEvents(csv("crew_events.csv")));
@@ -82,7 +83,7 @@ test.describe("crew overview", () => {
     await expect(selector(page)).toHaveAttribute("data-phase", "landed");
     await expect(page.locator("#mission-day-selector").getByText(`UMBRAL MISSION TIMELINE · ${TOTAL} DAYS`, { exact: true })).toBeVisible();
     await expect(page.locator("#mission-day-selector")).not.toContainText("SIMULATED DAYS");
-    await expect(page.locator("#mission-day-readout")).toHaveText("Day 942 · 12 Jun 2029 · Landed · Link");
+    await expect(page.locator("#mission-day-readout")).toHaveText("Day #942 · 12 Jun 2029");
     await expect(page.getByText("Simulated readings · Day 942 · 12 Jun 2029 · Landed")).toBeVisible();
 
     const cards = page.locator(".crew-card");
@@ -199,11 +200,11 @@ test.describe("crew overview", () => {
     expect(layout.fifthLeft).toBeCloseTo(layout.firstLeft, 0);
   });
 
-  test("the range slider, keyboard, and prev/next buttons change the day and every card", async ({ page }) => {
+  test("the keyboard slider and prev/next buttons change the day and every card", async ({ page }) => {
     await page.goto("/");
     await selectDay(page, 211);
     await expect(selector(page)).toHaveAttribute("data-phase", "mars_arrival");
-    await expect(page.locator("#mission-day-readout")).toHaveText("Day 211 · 12 Jun 2027 · Mars arrival · Link");
+    await expect(page.locator("#mission-day-readout")).toHaveText("Day #211 · 12 Jun 2027");
     await expectCardsMatchDay(page, 211);
     await expectChartsMatchDay(page, 211);
     await expect(card(page, "sofia").locator("[data-metric-readout='bloodPressure']")).toHaveAttribute("data-status", "demo-alert");
@@ -242,7 +243,7 @@ test.describe("crew overview", () => {
 
   test("event markers jump to scenario days and show authored states", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("[data-event-day]")).toHaveCount(3);
+    await expect(page.locator("[data-event-day]")).toHaveCount(4);
     await expect(async () => {
       await page.locator("[data-event-day='120']").click();
       await expect(selector(page)).toHaveAttribute("data-selected-day", "120", { timeout: 500 });
@@ -260,10 +261,15 @@ test.describe("crew overview", () => {
     await page.locator("[data-event-day='493']").click();
     await expect(selector(page)).toHaveAttribute("data-selected-day", "493");
     await expect(selector(page)).toHaveAttribute("data-comm", "blackout");
-    await expect(page.locator("#mission-day-readout")).toHaveText("Day 493 · 20 Mar 2028 · Mars surface · Comm blackout");
+    await expect(page.locator("#mission-day-readout")).toHaveText("Day #493 · 20 Mar 2028");
     const statuses = await page.locator("[data-metric-readout='radiation']").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-status")));
     expect(statuses).toEqual(["demo-deviation", "demo-deviation", "demo-deviation", "demo-deviation"]);
     await expect(page.locator(".crew-card .metric-status").filter({ hasText: "Deviation" })).toHaveCount(4);
+
+    await page.locator("[data-event-day='518']").click();
+    await expect(selector(page)).toHaveAttribute("data-selected-day", "518");
+    await expect(card(page, "ines").locator("[data-crew-event='spo2_alert']")).toContainText("SpO₂ alert");
+    await expect(card(page, "ines").locator("[data-crew-event='spo2_alert']")).toContainText("during surface EVA");
   });
 
   test("the phase band and legend are clickable and phases are distinguishable", async ({ page }) => {
@@ -275,6 +281,15 @@ test.describe("crew overview", () => {
       await expect(page.locator(`[data-phase-milestone='${phase}']`)).toHaveCount(1);
     }
     await expect(page.locator("[data-blackout]")).toHaveCount(1);
+    const labels = { transit_out: "Transit out", surface: "Mars surface", transit_return: "Transit return" };
+    for (const [phase, label] of Object.entries(labels)) {
+      await expect(page.locator(`[data-phase-label='${phase}']`)).toHaveText(label);
+      const glow = (await page.locator(`[data-phase-label='${phase}']`).boundingBox())!;
+      const fill = (await page.locator(`[data-phase-segment='${phase}']`).boundingBox())!;
+      expect(glow.y + glow.height).toBeLessThanOrEqual(fill.y + 1);
+      expect(Math.abs(glow.x - fill.x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(glow.width - fill.width)).toBeLessThanOrEqual(1);
+    }
     const colors = await page
       .locator("[data-phase-segment='transit_out'], [data-phase-segment='surface'], [data-phase-segment='transit_return'], [data-phase-milestone='mars_arrival']")
       .evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).backgroundColor));
@@ -293,6 +308,22 @@ test.describe("crew overview", () => {
     const selected = Number(await selector(page).getAttribute("data-selected-day"));
     expect(Math.abs(selected - Math.floor(0.9 * TOTAL) - 1)).toBeLessThanOrEqual(1);
     await expectCardsMatchDay(page, selected);
+  });
+
+  test("the day steppers flank the phase band, which replaces the visible slider and its date labels", async ({ page }) => {
+    await page.goto("/");
+    const band = (await page.locator("#mission-phase-band").boundingBox())!;
+    const prev = (await page.locator("#mission-day-prev").boundingBox())!;
+    const next = (await page.locator("#mission-day-next").boundingBox())!;
+    expect(prev.x + prev.width).toBeLessThanOrEqual(band.x);
+    expect(next.x).toBeGreaterThanOrEqual(band.x + band.width);
+    for (const button of [prev, next]) {
+      expect(button.y).toBeGreaterThanOrEqual(band.y);
+      expect(button.y + button.height).toBeLessThanOrEqual(band.y + band.height + 1);
+    }
+    const range = (await page.locator("#mission-day-range").boundingBox())!;
+    expect(range.width).toBeLessThanOrEqual(1);
+    await expect(selector(page).getByText(/^Day 1 · /)).toHaveCount(0);
   });
 
   test("has no horizontal overflow on a narrow screen after selecting a day", async ({ page }) => {
@@ -321,5 +352,64 @@ test.describe("crew overview", () => {
     await page.getByRole("link", { name: `Open ${third.name} profile` }).focus();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { level: 1, name: third.name })).toBeVisible();
+  });
+
+  test("the Latest button returns to the last mission day", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#mission-day-latest")).toBeDisabled();
+    await selectDay(page, 211);
+    await expect(page.locator("#mission-day-latest")).toBeEnabled();
+    await page.getByRole("button", { name: "Back to latest day" }).click();
+    await expect(selector(page)).toHaveAttribute("data-selected-day", String(TOTAL));
+    await expect(page.locator("#mission-day-latest")).toBeDisabled();
+    await expect(page.locator("#mission-day-next")).toBeDisabled();
+    await expectCardsMatchDay(page, TOTAL);
+  });
+
+  test("a card opens its profile on the selected mission day", async ({ page }) => {
+    await page.goto("/");
+    for (const person of PROFILES) {
+      await expect(card(page, person.id).locator("[data-profile-route]")).toHaveAttribute("href", `/astronaut/${person.id}`);
+    }
+    await selectDay(page, 211);
+    for (const person of PROFILES) {
+      await expect(card(page, person.id).locator("[data-profile-route]")).toHaveAttribute("href", `/astronaut/${person.id}?day=211`);
+    }
+    await page.getByRole("link", { name: "Open Sofía profile" }).click();
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=211$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Sofía" })).toBeVisible();
+    // The home page stays in the document (hidden) after the navigation, so match the visible selector.
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "211");
+    await expect(page.locator("[data-metric='bloodPressure']")).toHaveAttribute("data-status", "demo-alert");
+    await expect(page.locator("[data-metric='bloodPressure'] .metric-value")).toContainText(formatValue("bloodPressure", metricReading(readingFor(DATA, "sofia", 211), "bloodPressure")));
+  });
+
+  test("opening a profile again from another mission day shows that day", async ({ page }) => {
+    const heartRate = (day: number) => formatValue("heartRate", metricReading(readingFor(DATA, "sofia", day), "heartRate"));
+    const profileHeartRate = page.locator("[data-metric='heartRate'] .metric-value").filter({ visible: true });
+    await page.goto("/");
+    await selectVisibleDay(page, 211);
+    await page.getByRole("link", { name: "Open Sofía profile" }).click();
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=211$/);
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "211");
+
+    await page.getByRole("link", { name: "← Back to crew overview" }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await selectVisibleDay(page, 120);
+    await page.getByRole("link", { name: "Open Sofía profile" }).click();
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=120$/);
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "120");
+    await expect(page.getByRole("heading", { level: 2, name: "Day 120 readings" })).toBeVisible();
+    await expect(profileHeartRate).toContainText(heartRate(120));
+
+    // Back and forward return to the day left in the address bar.
+    await selectVisibleDay(page, 300);
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=300$/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/$/);
+    await page.goForward();
+    await expect(page).toHaveURL(/\/astronaut\/sofia\?day=300$/);
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "300");
+    await expect(profileHeartRate).toContainText(heartRate(300));
   });
 });

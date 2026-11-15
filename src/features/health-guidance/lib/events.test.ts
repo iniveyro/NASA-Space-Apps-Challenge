@@ -65,6 +65,27 @@ describe("local demo event history", () => {
     expect(closed.contextHistory).toHaveLength(1);
   });
 
+  it("keeps the same astronaut and metric separate across selected mission days and scenarios", () => {
+    const day518 = evaluateReading({
+      person, metricId: "spo2", value: 89, readingId: "ines:spo2:day:518:scenario:mission:demo-alert",
+      timestamp: "2028-04-14T00:00:00.000Z", referenceTime: "2028-04-14T00:00:00.000Z", source: "fixture",
+      missionDay: 518, missionDate: "2028-04-14", scenarioKey: "mission:demo-alert:spo2_alert",
+    });
+    const day519 = evaluateReading({
+      person, metricId: "spo2", value: 97, readingId: "ines:spo2:day:519:scenario:mission:within-demo-reference",
+      timestamp: "2028-04-15T00:00:00.000Z", referenceTime: "2028-04-15T00:00:00.000Z", source: "fixture",
+      missionDay: 519, missionDate: "2028-04-15", scenarioKey: "mission:within-demo-reference:reference",
+    });
+    const first = recordAction(createEvent(day518), day518.guideId, day518.ruleVersion, "step-1", "Review the source day", true);
+    const second = createEvent(day519);
+    expect(first.readingId).not.toBe(second.readingId);
+    expect(first.missionDay).toBe(518);
+    expect(second.missionDay).toBe(519);
+    expect(first.actions).toHaveLength(1);
+    expect(second.actions).toHaveLength(0);
+    expect(parseEventHistory(JSON.stringify([first, second]))).toEqual([first, second]);
+  });
+
   it("validates nested identities, enums, action and timestamp records before parsing", () => {
     const event = createEvent(evaluation);
     const followUp = recordFollowUp(event, person, { metricId: "bloodPressure", value: { systolic: 118, diastolic: 72 }, unit: "mmHg", timestamp: "2029-06-12T02:00:00.000Z" }, "reading-follow-up", "2029-06-12T02:00:00.000Z");

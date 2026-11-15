@@ -22,6 +22,9 @@ function reading(crewId: string, day: number, overrides: Partial<CrewDayReading>
     sleep: 6.5,
     mood: 4,
     glucose: 80,
+    activity: 30,
+    spo2: 97,
+    stress: 120,
     radiation: day * 1.8,
     event: null,
     ...overrides,
@@ -61,14 +64,16 @@ describe("mission dataset", () => {
     expect(readingFor(data, "nobody", 2)).toBeNull();
   });
 
-  it("maps a day reading to dashboard metrics and never fabricates unrecorded ones", () => {
+  it("maps a day reading to dashboard metrics and keeps missing values null", () => {
     const day2 = readingFor(data, "ines", 2);
     expect(metricReading(day2, "heartRate")).toBe(62);
     expect(metricReading(day2, "bloodPressure")).toEqual({ systolic: 112, diastolic: 70 });
     expect(metricReading(day2, "radiation")).toBe(3.6);
-    for (const metricId of ["spo2", "activity", "stress"] as const) {
-      expect(metricReading(day2, metricId)).toBeNull();
-    }
+    expect(metricReading(day2, "spo2")).toBe(97);
+    expect(metricReading(day2, "activity")).toBe(30);
+    expect(metricReading({ ...day2!, activity: 0 }, "activity")).toBe(0);
+    expect(metricReading(day2, "stress")).toBe(120);
+    expect(metricReading({ ...day2!, stress: null }, "stress")).toBeNull();
     expect(metricReading({ ...day2!, diastolic: null }, "bloodPressure")).toBeNull();
     expect(metricReading(null, "heartRate")).toBeNull();
   });
@@ -86,6 +91,7 @@ describe("mission dataset", () => {
     expect(eventLabel("orthostatic_test")).toBe("Orthostatic test");
     expect(eventLabel("viral_reactivation")).toBe("Viral reactivation");
     expect(eventLabel("solar_storm")).toBe("Solar storm");
+    expect(eventLabel("spo2_alert")).toBe("SpO₂ alert");
   });
 });
 
@@ -108,6 +114,12 @@ describe("authored day scenarios", () => {
       expect(resolveDayScenario(crewId, "radiation", 493, 571.6)).toEqual({ status: "demo-deviation", label: "Deviation" });
       expect(resolveDayScenario(crewId, "radiation", 494, 572.2).status).toBe("within-demo-reference");
     }
+  });
+
+  it("marks Inés's SpO₂ as a demo alert on day 518 only", () => {
+    expect(resolveDayScenario("ines", "spo2", 518, 89)).toEqual({ status: "demo-alert", label: "Alert" });
+    expect(resolveDayScenario("ines", "spo2", 519, 97).status).toBe("within-demo-reference");
+    expect(resolveDayScenario("sofia", "spo2", 518, 98).status).toBe("within-demo-reference");
   });
 
   it("is independent of the reading value and unknown when the reading is missing", () => {

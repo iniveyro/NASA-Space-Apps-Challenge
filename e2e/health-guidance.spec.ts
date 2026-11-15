@@ -1,5 +1,6 @@
 import { METRICS } from "../src/features/crew-health-data";
 import { expect, test } from "./fixtures";
+import { DATA, TOTAL, datasetValue, daySelector, selectDay } from "./mission-dataset";
 
 test.describe("educational health guidance", () => {
   test("every metric card opens its guide and keeps the existing selection behavior", async ({ page }, testInfo) => {
@@ -43,7 +44,7 @@ test.describe("educational health guidance", () => {
     await page.getByRole("button", { name: "Close health guidance" }).click();
     await page.locator("[data-metric='spo2']").click();
     await expect(page.getByText("Reported symptoms: Trouble breathing")).toBeVisible();
-    await expect(page.getByText("Initial: CRITICAL")).toBeVisible();
+    await expect(page.getByRole("dialog").locator("li").filter({ hasText: "Initial: CRITICAL" }).first()).toBeVisible();
     await page.getByRole("button", { name: "Close health guidance" }).click();
 
     await page.getByRole("button", { name: /C · Radiation environmental event/ }).click();
@@ -58,7 +59,8 @@ test.describe("educational health guidance", () => {
     await page.getByRole("button", { name: "Close health guidance" }).click();
     await page.getByRole("button", { name: "Exit simulation" }).click();
     await page.goto("/astronaut/kanji");
-    await expect(page.locator("[data-metric='sleep'] .metric-value")).not.toContainText("5.2");
+    await expect(page.getByRole("button", { name: /A · Short sleep/ })).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator("[data-metric='sleep'] .metric-value")).toContainText(datasetValue("kanji", "sleep", TOTAL));
   });
 
   test("logs actions, paired follow-up, resolution, and history across reload", async ({ page }) => {
@@ -79,11 +81,11 @@ test.describe("educational health guidance", () => {
     await expect(dialog.locator("li p").filter({ hasText: /Follow-up .* unknown/ })).toBeVisible();
     await dialog.getByLabel("Resolution reason").fill("Reviewed for demo history");
     await dialog.getByRole("button", { name: "Record resolution" }).click();
-    await expect(dialog.getByText(/Resolved manually: Reviewed for demo history/)).toBeVisible();
+    await expect(dialog.getByText(/Manual resolution: Reviewed for demo history/)).toBeVisible();
     await page.reload();
     await page.locator("[data-metric='bloodPressure']").click();
     await expect(page.getByRole("dialog").getByText("Event history (1)")).toBeVisible();
-    await expect(page.getByRole("dialog").getByText(/Follow-up .* unknown/)).toBeVisible();
+    await expect(page.getByRole("dialog").getByText(/Follow-up .* unknown/).first()).toBeVisible();
     const auditActions = page.getByRole("dialog").locator("li p").filter({ hasText: /^Action:/ });
     await expect(auditActions).toHaveCount(3);
     await expect(auditActions.filter({ hasText: /— checked ·/ })).toHaveCount(2);
@@ -151,6 +153,55 @@ test.describe("educational health guidance", () => {
     await page.keyboard.press("Escape");
     await expect(dialog).not.toBeVisible();
     await expect(card).toBeFocused();
+  });
+
+  test("uses selected mission-day readings and keeps local actions isolated by day", async ({ page }) => {
+    await page.goto("/astronaut/ines?day=518");
+    const card = page.locator("[data-metric='spo2']");
+    await expect(card).toContainText("89");
+    await expect(card).toHaveAttribute("data-guidance-status", "critical");
+    await expect(card).toHaveAttribute("data-day", "518");
+    await card.click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText(/Mission day 518/)).toBeVisible();
+    await expect(dialog).toContainText(DATA.days[517].date);
+    await expect(dialog.getByText(/Current reading: 89 %/)).toBeVisible();
+    await dialog.getByRole("checkbox", { name: "Mark action 1 complete" }).check();
+    await page.keyboard.press("Escape");
+
+    await selectDay(page, 519);
+    await expect(daySelector(page)).toHaveAttribute("data-selected-day", "519");
+    await expect(page.locator("[data-metric='spo2']")).toContainText(datasetValue("ines", "spo2", 519));
+    await page.locator("[data-metric='spo2']").click();
+    await expect(page.getByRole("dialog").getByText(/Mission day 519/)).toBeVisible();
+    await expect(page.getByRole("dialog").getByRole("checkbox", { name: "Mark action 1 complete" })).not.toBeChecked();
+    await page.keyboard.press("Escape");
+
+    await selectDay(page, 518);
+    await page.locator("[data-metric='spo2']").click();
+    await expect(page.getByRole("dialog").getByRole("checkbox", { name: "Mark action 1 complete" })).toBeChecked();
+    await expect(page.getByRole("dialog").getByText(/Day 519/)).toBeVisible();
+
+    await expect(DATA.days[517].date).toBe("2028-04-14");
+  });
+
+  test("describes mood as ordinal self-report and mission stress as the SI metric", async ({ page }) => {
+    await page.goto("/astronaut/ines");
+    await expect(page.locator("[data-metric='stress']")).toContainText("SI");
+    await expect(page.locator("[data-metric='stress']")).not.toContainText("of 5");
+    await page.locator("[data-metric='stress']").click();
+    const stressDialog = page.getByRole("dialog");
+    await expect(stressDialog).toContainText(/Baevsky Stress Index/);
+    await expect(stressDialog).toContainText(/simulated RR-interval/i);
+    await stressDialog.getByLabel("New Stress index (SI)").fill("150");
+    await stressDialog.getByRole("button", { name: "Save follow-up" }).click();
+    await expect(stressDialog).toContainText("Current reading: 150 SI");
+    await page.keyboard.press("Escape");
+
+    await page.locator("[data-metric='mood']").click();
+    const moodDialog = page.getByRole("dialog");
+    await expect(moodDialog).toContainText(/5 means more positive and 1 means lower mood/i);
+    await expect(moodDialog).toContainText("of 5");
   });
 
   test("opens the local guide and records actions while offline without contacting an API", async ({ page }) => {

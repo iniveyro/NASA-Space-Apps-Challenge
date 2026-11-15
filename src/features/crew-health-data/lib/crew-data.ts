@@ -1,7 +1,7 @@
 /**
  * Fictional UMBRAL crew profiles, metrics, and deterministic profile histories.
- * Baselines are the day-1 simulated readings from data/processed/crew_daily.csv; SpO₂, activity,
- * and stress are not part of the mission simulation and keep fictional profile-only values.
+ * Baselines are the day-1 simulated readings from data/processed/crew_daily.csv; activity is the
+ * simulator's assumed daily exercise baseline, and stress is the day-1 Baevsky index.
  * All names, values, dates, labels, and statuses are fictional fixtures.
  */
 import type {
@@ -29,17 +29,17 @@ export const METRICS: readonly Metric[] = [
   { id: "activity", label: "Activity", unit: "min", region: "body", type: "bar", description: "Fictional minutes of logged daily activity.", demoReference: "Fictional preflight activity context; no target or health threshold is implied." },
   { id: "spo2", label: "SpO₂", unit: "%", region: "body", type: "line", description: "Simulated point reading; not a continuous sensor stream.", demoReference: "Fictional point-reading context; no clinical range is asserted." },
   { id: "glucose", label: "Glucose", unit: "mg/dL", region: "body", type: "line", description: "Simulated point reading; not a continuous sensor stream.", demoReference: "Fictional point-reading context; no clinical range is asserted." },
-  { id: "stress", label: "Stress", unit: "/ 5", region: "brain", type: "category", description: "Self-reported stress on a five-point scale; not a brain measurement.", demoReference: "Self-reported fictional preflight context on this demo scale; not a clinical assessment." },
+  { id: "stress", label: "Stress index", unit: "SI", region: "brain", type: "line", description: "Baevsky stress index computed from the day's simulated RR intervals (at least 20 beats); not a brain measurement.", demoReference: "Computed from simulated heartbeat intervals for interface comparison only; not a clinical assessment." },
   { id: "radiation", label: "Cumulative radiation", unit: "mSv", region: "body", type: "line", description: "Simulated cumulative mission dose; values are nondecreasing and are not a dose rate.", demoReference: "Mission exposure scenario only: cumulative mission dose, not a personal-physiology baseline or a universal safe limit." },
 ];
 
 const BONE_NOTE = "Spaceflight can affect bone health. Individual responses vary; this demo does not estimate bone density or loss.";
 
 export const PROFILES: readonly Profile[] = [
-  { id: "ines", name: "Inés", role: "Commander · EVA lead", initials: "IN", color: "blue", health: "stable", activity: "active", age: 44, weightKg: 62, sex: "Female", boneNote: BONE_NOTE, base: { heartRate: 61, systolic: 122, diastolic: 68, temperature: 36.6, sleep: 6.4, mood: 4, activity: 45, spo2: 98, glucose: 72, stress: 2, radiation: 151.8 } },
-  { id: "kanji", name: "Kanji", role: "Flight engineer · Systems", initials: "KA", color: "green", health: "monitoring", activity: "active", age: 47, weightKg: 70, sex: "Male", boneNote: BONE_NOTE, base: { heartRate: 43, systolic: 114, diastolic: 72, temperature: 36.5, sleep: 5.5, mood: 4, activity: 40, spo2: 97, glucose: 77, stress: 2, radiation: 1.8 } },
-  { id: "malik", name: "Malik", role: "Mission specialist · Geologist", initials: "MA", color: "orange", health: "stable", activity: "resting", age: 39, weightKg: 81, sex: "Male", boneNote: BONE_NOTE, base: { heartRate: 60, systolic: 116, diastolic: 74, temperature: 36.7, sleep: 6.1, mood: 4, activity: 8, spo2: 98, glucose: 77, stress: 1, radiation: 1.8 } },
-  { id: "sofia", name: "Sofía", role: "Pilot · EVA specialist", initials: "SO", color: "slate", health: "simulated-alert", activity: "active", age: 36, weightKg: 58, sex: "Female", boneNote: BONE_NOTE, base: { heartRate: 67, systolic: 121, diastolic: 70, temperature: 36.8, sleep: 6.5, mood: 4, activity: 50, spo2: 98, glucose: 76, stress: 2, radiation: 1.8 } },
+  { id: "ines", name: "Inés", role: "Commander · EVA lead", initials: "IN", color: "blue", health: "stable", activity: "active", age: 44, weightKg: 62, sex: "Female", boneNote: BONE_NOTE, base: { heartRate: 61, systolic: 122, diastolic: 68, temperature: 36.6, sleep: 6.4, mood: 4, activity: 45, spo2: 98, glucose: 72, stress: 187, radiation: 151.8 } },
+  { id: "kanji", name: "Kanji", role: "Flight engineer · Systems", initials: "KA", color: "green", health: "monitoring", activity: "active", age: 47, weightKg: 70, sex: "Male", boneNote: BONE_NOTE, base: { heartRate: 43, systolic: 114, diastolic: 72, temperature: 36.5, sleep: 5.5, mood: 4, activity: 40, spo2: 97, glucose: 77, stress: 75, radiation: 1.8 } },
+  { id: "malik", name: "Malik", role: "Mission specialist · Geologist", initials: "MA", color: "orange", health: "stable", activity: "resting", age: 39, weightKg: 81, sex: "Male", boneNote: BONE_NOTE, base: { heartRate: 60, systolic: 116, diastolic: 74, temperature: 36.7, sleep: 6.1, mood: 4, activity: 35, spo2: 98, glucose: 77, stress: 157, radiation: 1.8 } },
+  { id: "sofia", name: "Sofía", role: "Pilot · EVA specialist", initials: "SO", color: "slate", health: "simulated-alert", activity: "active", age: 36, weightKg: 58, sex: "Female", boneNote: BONE_NOTE, base: { heartRate: 67, systolic: 121, diastolic: 70, temperature: 36.8, sleep: 6.5, mood: 4, activity: 50, spo2: 98, glucose: 76, stress: 179, radiation: 1.8 } },
 ];
 
 export const STATUS_LABELS: Readonly<Record<ScenarioStatus, string>> = {
@@ -108,7 +108,7 @@ function valueFor(person: Profile, metricId: MetricId, ago: number): MetricReadi
     case "activity": return Math.max(0, person.base.activity + shapeAt("activity", index));
     case "spo2": return Math.max(90, Math.min(100, person.base.spo2 + shapeAt("spo2", index)));
     case "glucose": return Math.max(50, person.base.glucose + shapeAt("glucose", index));
-    case "stress": return Math.max(1, Math.min(5, person.base.stress + shapeAt("stress", index)));
+    case "stress": return Math.max(0, person.base.stress + shapeAt("stress", index) * 10);
     case "radiation": return Number((person.base.radiation + SHAPES.dose.slice(0, index + 1).reduce((sum, dose) => sum + dose, 0)).toFixed(2));
     default: return null;
   }
@@ -158,6 +158,7 @@ export function formatValue(metricId: string, value: unknown): string {
   if (metricId === "temperature") return Number(value).toFixed(1);
   if (metricId === "sleep") return Number(value).toFixed(1);
   if (metricId === "radiation") return Number(value).toFixed(2);
+  if (metricId === "stress") return String(Math.round(Number(value)));
   return String(value);
 }
 

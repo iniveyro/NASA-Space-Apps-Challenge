@@ -1,4 +1,8 @@
+import { formatShortDate } from "../src/shared/lib/format-date";
 import { expect, test } from "./fixtures";
+import { DATA, TOTAL, datasetValue } from "./mission-dataset";
+
+const heartRateTooltip = (crewId: string, day: number) => `${formatShortDate(DATA.days[day - 1].date)} · Heart rate: ${datasetValue(crewId, "heartRate", day)} bpm`;
 
 test.describe("trend chart", () => {
   test("switches between 30 and 7 day ranges", async ({ page }) => {
@@ -14,6 +18,7 @@ test.describe("trend chart", () => {
   test("blood pressure keeps systolic and diastolic as separate series", async ({ page }) => {
     await page.goto("/astronaut/ines");
     await page.locator("[data-metric='bloodPressure']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#trend-chart .chart-line")).toHaveCount(2);
     await expect(page.locator("#chart-legend")).toHaveText(/Systolic\s*Diastolic/);
   });
@@ -21,14 +26,15 @@ test.describe("trend chart", () => {
   test("bar and category metrics render their own mark types", async ({ page }) => {
     await page.goto("/astronaut/ines");
     await page.locator("[data-metric='sleep']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(30);
-    await page.getByRole("button", { name: "Close health guidance" }).click();
     await page.locator("[data-metric='mood']").click();
+    await page.keyboard.press("Escape");
     await expect(page.locator("#trend-chart .chart-line")).toHaveCount(0);
     await expect(page.locator("#trend-chart .chart-mark")).toHaveCount(30);
   });
 
-  test("pointer and keyboard show the nearest reading", async ({ page }) => {
+  test("pointer and keyboard show the nearest reading of the mission dataset", async ({ page }) => {
     await page.goto("/astronaut/ines");
     const tooltip = page.locator("#chart-tooltip");
     await expect(tooltip).toBeHidden();
@@ -38,10 +44,47 @@ test.describe("trend chart", () => {
     const box = (await chart.boundingBox())!;
     await chart.hover({ position: { x: box.width - 4, y: box.height / 2 } });
     await expect(tooltip).toBeVisible();
-    await expect(tooltip).toHaveText("Jun 12 · Heart rate: 61 bpm");
+    await expect(tooltip).toHaveText(heartRateTooltip("ines", TOTAL));
 
     await page.locator("[data-days='7']").click();
     await page.locator("#trend-chart [data-point='0']").focus();
-    await expect(tooltip).toHaveText("Jun 6 · Heart rate: 64 bpm");
+    await expect(tooltip).toHaveText(heartRateTooltip("ines", TOTAL - 6));
+  });
+
+  test("the history window ends at the selected mission day and is clipped at day 1", async ({ page }) => {
+    await page.goto("/astronaut/ines?day=211");
+    await expect(page.locator("#trend-chart [data-point]")).toHaveCount(30);
+    await expect(page.locator("#trend-chart [data-point='29']")).toHaveAttribute("aria-label", heartRateTooltip("ines", 211));
+    await expect(page.locator("#trend-chart [data-point='0']")).toHaveAttribute("aria-label", heartRateTooltip("ines", 182));
+
+    await page.goto("/astronaut/ines?day=3");
+    await expect(page.locator("#trend-chart [data-point]")).toHaveCount(3);
+    await expect(page.locator("#trend-chart [data-point='0']")).toHaveAttribute("aria-label", heartRateTooltip("ines", 1));
+
+    await page.goto("/astronaut/ines?day=1");
+    await expect(page.locator("#trend-chart [data-point]")).toHaveCount(1);
+    await page.locator("[data-metric='bloodPressure']").click();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#trend-chart .chart-mark")).toHaveCount(2);
+    await page.locator("[data-metric='sleep']").click();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(1);
+  });
+
+  test("activity plots one bar per day, rest days included, and SpO₂ and the stress index plot as lines", async ({ page }) => {
+    await page.goto("/astronaut/ines");
+    await page.locator("[data-metric='activity']").click();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#chart-metric-title")).toHaveText("Activity");
+    await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(30);
+    await page.locator("[data-days='7']").click();
+    await expect(page.locator("#trend-chart .chart-bar")).toHaveCount(7);
+    await page.locator("[data-days='30']").click();
+    for (const metricId of ["spo2", "stress"]) {
+      await page.locator(`[data-metric='${metricId}']`).click();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("#chart-empty")).toHaveCount(0);
+      await expect(page.locator("#trend-chart [data-point]")).toHaveCount(30);
+    }
   });
 });

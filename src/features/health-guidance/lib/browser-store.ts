@@ -51,7 +51,8 @@ export const guidanceStore = {
   getServerSnapshot: () => SERVER_SNAPSHOT,
   findEvent(evaluation: GuidanceEvaluation) {
     return snapshot.events.find((event) => event.astronautId === evaluation.astronautId && event.metricId === evaluation.metricId &&
-      (event.readingId === evaluation.readingId || event.currentEvaluation.readingId === evaluation.readingId || event.followUps.some((reading) => reading.readingId === evaluation.readingId)));
+      (event.readingId === evaluation.readingId || event.currentEvaluation.readingId === evaluation.readingId) &&
+      event.missionDay === evaluation.missionDay && event.missionDate === evaluation.missionDate && event.scenarioKey === evaluation.scenarioKey);
   },
   ensureEvent(evaluation: GuidanceEvaluation, create: (value: GuidanceEvaluation) => GuidanceEvent) {
     const existing = guidanceStore.findEvent(evaluation);

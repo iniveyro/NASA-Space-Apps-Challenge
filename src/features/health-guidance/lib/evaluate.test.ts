@@ -32,9 +32,12 @@ describe("educational guidance catalog and evaluator", () => {
     expect(isCompleteFiniteReading("bloodPressure", { systolic: 0, diastolic: 0 })).toBe(false);
     for (const metricId of ["heartRate", "sleep", "glucose", "temperature"] as const) expect(isCompleteFiniteReading(metricId, -0.1)).toBe(false);
     expect(isCompleteFiniteReading("mood", 5.2)).toBe(false);
-    expect(isCompleteFiniteReading("stress", 0)).toBe(false);
+    expect(isCompleteFiniteReading("stress", 0)).toBe(true);
+    expect(isCompleteFiniteReading("stress", 150)).toBe(true);
+    expect(isCompleteFiniteReading("stress", 150.5)).toBe(true);
+    expect(isCompleteFiniteReading("stress", -0.1)).toBe(false);
     expect(isCompleteFiniteReading("mood", 1)).toBe(true);
-    expect(isCompleteFiniteReading("stress", 5)).toBe(true);
+    expect(isCompleteFiniteReading("mood", 5)).toBe(true);
   });
 
   it("escalates severe symptoms even when values are normal, missing, or unreliable", () => {
@@ -55,10 +58,12 @@ describe("educational guidance catalog and evaluator", () => {
     expect(evaluateReading({ ...input, metricId: "activity", value: 0 }).status).not.toBe("critical");
   });
 
-  it("keeps activity state independent and explains opposite mood/stress scale directions", () => {
+  it("keeps activity state independent and distinguishes self-reported mood from computed stress index", () => {
     expect(evaluateReading({ ...input, scenarioId: "respiratory-symptoms", activityState: "sleeping" }).status).toBe("critical");
     expect(GUIDANCE_CATALOG.find((guide) => guide.metricId === "mood" && guide.status === "normal")?.whatIsHappening).toMatch(/5 means more positive and 1 means lower mood/i);
-    expect(GUIDANCE_CATALOG.find((guide) => guide.metricId === "stress" && guide.status === "normal")?.whatIsHappening).toMatch(/5 means more reported stress and 1 means less/i);
+    const stressGuide = GUIDANCE_CATALOG.find((guide) => guide.metricId === "stress" && guide.status === "normal")!;
+    expect(stressGuide.whatIsHappening).toMatch(/Baevsky Stress Index.*simulated RR-interval/i);
+    expect(stressGuide.whatIsHappening).not.toMatch(/scale from 1\s*(?:–|-)\s*5/i);
     expect(evaluateReading({ ...input, source: "user" }).status).toBe("unknown");
     expect(evaluateReading({ ...input, scenarioId: "sleep-short", metricId: "sleep" }).status).toBe("warning");
     expect(evaluateReading({ ...input, scenarioId: "respiratory-symptoms", symptoms: [] }).status).toBe("critical");
@@ -80,6 +85,24 @@ describe("educational guidance catalog and evaluator", () => {
     const result = evaluateReading({ ...input, unit: "kPa" });
     expect(result.status).toBe("unknown");
     expect(result.unit).toBe("kPa");
+  });
+
+  it("uses selected mission-day authored status and timestamps instead of profile-wide status or wall-clock age", () => {
+    const missionDate = "2028-04-14";
+    const timestamp = `${missionDate}T00:00:00.000Z`;
+    const evaluation = evaluateReading({
+      ...input, person, metricId: "spo2", value: 89, readingId: "ines:spo2:day:518:date:2028-04-14:scenario:mission:demo-alert:spo2_alert",
+      timestamp, now: timestamp, referenceTime: timestamp, authoredScenario: {
+        status: "demo-alert", label: "Alert", baseline: 98, baselineLabel: "demo", reference: "Authored mission fixture", evidence: "Mission event fixture",
+      }, missionDay: 518, missionDate, scenarioKey: "mission:demo-alert:spo2_alert",
+    });
+    expect(evaluation.status).toBe("critical");
+    expect(evaluation.reasonCode).toBe("AUTHORED_DEMO_ALERT_NOT_CLINICAL");
+    expect(evaluation.ruleId).toBe("authored-mission-day-state");
+    expect(evaluation.missionDay).toBe(518);
+    expect(evaluation.missionDate).toBe(missionDate);
+    expect(evaluation.scenarioKey).toContain("spo2_alert");
+    expect(evaluation.timestamp).toBe(timestamp);
   });
 
   it("keeps radiation dose-only and activity minutes-only out of critical status even for authored alerts", () => {

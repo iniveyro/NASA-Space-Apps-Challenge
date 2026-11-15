@@ -60,7 +60,8 @@ describe("crew health data", () => {
     expect(metrics.radiation.region).toBe("body");
     expect(metrics.sleep.region).toBe("brain");
     expect(metrics.sleep.description).toMatch(/self-reported/i);
-    expect(metrics.stress.description).toMatch(/self-reported/i);
+    expect(metrics.stress.description).toMatch(/Baevsky.*RR intervals/i);
+    expect(metrics.stress.unit).toBe("SI");
     expect(metrics.spo2.description).toMatch(/point reading.*not a continuous/i);
     expect(metrics.glucose.description).toMatch(/point reading.*not a continuous/i);
   });
@@ -101,7 +102,7 @@ describe("crew health data", () => {
 
   it("categorical self-reports stay on their declared five-point scale", () => {
     for (const profile of data.PROFILES) {
-      for (const metricId of ["mood", "stress"]) {
+      for (const metricId of ["mood"]) {
         const values = data.getSeries(profile.id, metricId, 30).map(({ value }) => value as number);
         expect(values.every((value) => Number.isInteger(value) && value >= 1 && value <= 5)).toBe(true);
       }
@@ -138,7 +139,7 @@ describe("crew health data", () => {
     expect(JSON.stringify(data.PROFILES)).toBe(before);
     expect(data.ENVIRONMENT).toBe("Microgravity");
     expect(data.METRICS.find((metric) => metric.id === "sleep")!.demoReference).toMatch(/self-reported/i);
-    expect(data.METRICS.find((metric) => metric.id === "stress")!.description).toMatch(/self-reported/i);
+    expect(data.METRICS.find((metric) => metric.id === "stress")!.demoReference).toMatch(/not a clinical assessment/i);
   });
 
   it("incomplete or non-finite paired readings and baselines resolve to explicit unknown", () => {

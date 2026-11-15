@@ -21,8 +21,6 @@ const VIEW_OPTIONS = [
   { value: "mission", label: "Mission in 3D" },
 ] as const;
 
-const MISSION_VIEW_HINT = "Where the crew is on the selected day, and how long a signal takes to reach Earth.";
-
 /** The crew cards for one mission day. */
 function CrewGrid({ data, day, description }: { data: MissionDataset; day: number; description: string }) {
   return (
@@ -45,6 +43,7 @@ function CrewGrid({ data, day, description }: { data: MissionDataset; day: numbe
               key={person.id}
               person={person}
               day={day}
+              latestDay={data.days.length}
               reading={reading}
               trends={{
                 heartRate: [{ label: "heart rate", values: seriesWindow(data, person.id, "heartRate", day, 7) }],
@@ -86,7 +85,6 @@ export function MissionCrewBoard({ data, mission }: { data: MissionDataset; miss
         {mission ? (
           <div data-home-view-toggle className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <SegmentedToggle label="Screen" options={VIEW_OPTIONS} value={view} onChange={setView} dataKey="home-view" />
-            {view === "mission" ? <p id="home-view-hint" className="m-0 text-caption text-muted">{MISSION_VIEW_HINT}</p> : null}
           </div>
         ) : null}
       </div>
