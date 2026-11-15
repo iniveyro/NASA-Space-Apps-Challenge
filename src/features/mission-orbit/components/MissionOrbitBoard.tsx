@@ -3,12 +3,25 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PROFILES } from "@/features/crew-health-data";
-import { MissionDaySelector, formatMissionDate, useMissionDay } from "@/features/mission-timeline";
+import {
+  MissionDaySelector,
+  formatMissionDate,
+  useMissionDay,
+} from "@/features/mission-timeline";
 import { Panel, PanelHeading, SegmentedToggle } from "@/shared/design-system";
 import { cn } from "@/shared/lib/cn";
-import { usePrefersReducedMotion, useWebglSupport } from "@/shared/lib/use-media";
+import {
+  usePrefersReducedMotion,
+  useWebglSupport,
+} from "@/shared/lib/use-media";
 import { formatDelay, pluralDays } from "../lib/format";
-import { SOLAR_STORM_EVENT, clampDay, delayMinutes, delaySeries, linkOutlook } from "../lib/geometry";
+import {
+  SOLAR_STORM_EVENT,
+  clampDay,
+  delayMinutes,
+  delaySeries,
+  linkOutlook,
+} from "../lib/geometry";
 import type { MissionView } from "../lib/mission-view.server";
 import { viewForPhase, type CameraView } from "../lib/scene-math";
 import { CrewDayPanel } from "./CrewDayPanel";
@@ -48,20 +61,50 @@ interface MissionConsoleProps extends MissionView {
 /** The mission view on its own page: reads ?day= and keeps the day in the address bar. */
 export function MissionOrbitBoard({ data, geometry, story }: MissionView) {
   const params = useSearchParams();
-  const [day, setDay] = useState(() => clampDay(Number(params.get("day") ?? 1), geometry.total));
-  return <MissionConsole data={data} geometry={geometry} story={story} day={day} onDayChange={setDay} embedded={false} />;
+  const [day, setDay] = useState(() =>
+    clampDay(Number(params.get("day") ?? 1), geometry.total),
+  );
+  return (
+    <MissionConsole
+      data={data}
+      geometry={geometry}
+      story={story}
+      day={day}
+      onDayChange={setDay}
+      embedded={false}
+    />
+  );
 }
 
 /** The mission view inside another screen (the home page): follows that screen's mission-day selector. */
-export function MissionOrbitEmbedded({ geometry, story }: Pick<MissionView, "geometry" | "story">) {
+export function MissionOrbitEmbedded({
+  geometry,
+  story,
+}: Pick<MissionView, "geometry" | "story">) {
   const mission = useMissionDay();
   if (!mission) return null;
   const { data, day, onChange } = mission;
-  return <MissionConsole data={data} geometry={geometry} story={story} day={clampDay(day, geometry.total)} onDayChange={onChange} embedded />;
+  return (
+    <MissionConsole
+      data={data}
+      geometry={geometry}
+      story={story}
+      day={clampDay(day, geometry.total)}
+      onDayChange={onChange}
+      embedded
+    />
+  );
 }
 
 /** Interactive mission view: day selector (standalone only), 3D scene, Earth-link readout, story, and crew readings. */
-function MissionConsole({ data, geometry, story, day, onDayChange, embedded }: MissionConsoleProps) {
+function MissionConsole({
+  data,
+  geometry,
+  story,
+  day,
+  onDayChange,
+  embedded,
+}: MissionConsoleProps) {
   const total = geometry.total;
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<30 | 90>(30);
@@ -69,19 +112,30 @@ function MissionConsole({ data, geometry, story, day, onDayChange, embedded }: M
   const [viewNonce, setViewNonce] = useState(0);
   const [modeChoice, setModeChoice] = useState<"3d" | "2d" | null>(null);
   const [sceneKey, setSceneKey] = useState(0);
-  const [fallbackReason, setFallbackReason] = useState<"slow" | "unavailable" | null>(null);
+  const [fallbackReason, setFallbackReason] = useState<
+    "slow" | "unavailable" | null
+  >(null);
   const reducedMotion = usePrefersReducedMotion();
   const webgl = useWebglSupport();
   const dayRef = useRef(day);
   const touched = useRef(false);
 
-  const mode: "3d" | "2d" = !webgl || fallbackReason === "unavailable" ? "2d" : (modeChoice ?? (fallbackReason === "slow" ? "2d" : "3d"));
+  const mode: "3d" | "2d" =
+    !webgl || fallbackReason === "unavailable"
+      ? "2d"
+      : (modeChoice ?? (fallbackReason === "slow" ? "2d" : "3d"));
   const phase = geometry.phase[day - 1];
-  const view: CameraView = viewChoice === "auto" ? viewForPhase(phase) : viewChoice;
+  const view: CameraView =
+    viewChoice === "auto" ? viewForPhase(phase) : viewChoice;
   const beatDays = useMemo(() => story.map((beat) => beat.day), [story]);
   const delays = useMemo(() => delaySeries(geometry), [geometry]);
-  const maxRoundTripMin = useMemo(() => Math.max(0, ...delays.map((value) => (value ?? 0) * 2)), [delays]);
-  const storm = data.events.some((event) => event.day === day && event.event === SOLAR_STORM_EVENT);
+  const maxRoundTripMin = useMemo(
+    () => Math.max(0, ...delays.map((value) => (value ?? 0) * 2)),
+    [delays],
+  );
+  const storm = data.events.some(
+    (event) => event.day === day && event.event === SOLAR_STORM_EVENT,
+  );
 
   useEffect(() => {
     dayRef.current = day;
@@ -113,7 +167,9 @@ function MissionConsole({ data, geometry, story, day, onDayChange, embedded }: M
           carry -= steps;
           const current = dayRef.current;
           let next = Math.min(total, current + steps);
-          const beat = beatDays.find((beatDay) => beatDay > current && beatDay <= next);
+          const beat = beatDays.find(
+            (beatDay) => beatDay > current && beatDay <= next,
+          );
           if (beat !== undefined) {
             next = beat;
             carry = 0;
@@ -164,37 +220,81 @@ function MissionConsole({ data, geometry, story, day, onDayChange, embedded }: M
         : `Earth sees these readings ${formatDelay(delay)} after the crew does, and its answer takes as long to come back.`;
 
   return (
-    <div id="mission-orbit-board" data-selected-day={day} data-comm={geometry.comm[day - 1]} data-phase={phase ?? ""} data-playing={playing}>
-      {embedded ? null : <MissionDaySelector days={data.days} events={data.events} crew={PROFILES} value={day} onChange={selectDay} />}
+    <div
+      id="mission-orbit-board"
+      data-selected-day={day}
+      data-comm={geometry.comm[day - 1]}
+      data-phase={phase ?? ""}
+      data-playing={playing}
+    >
+      {embedded ? null : (
+        <MissionDaySelector
+          days={data.days}
+          events={data.events}
+          crew={PROFILES}
+          value={day}
+          onChange={selectDay}
+        />
+      )}
 
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(280px,340px)] items-start gap-4 max-md:grid-cols-1">
-        <Panel id="orbit-panel" aria-labelledby="orbit-title">
-          <PanelHeading
-            eyebrow="HELIOCENTRIC VIEW · POSITIONS FROM EPHEMERIDES"
-            title="Where the crew is"
-            titleId="orbit-title"
-            className="flex-wrap"
-            actions={webgl ? <SegmentedToggle label="Rendering" options={MODE_OPTIONS} value={mode} onChange={chooseMode} dataKey="mode" /> : null}
-          />
-          <div className="mt-3 mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <button type="button" id="mission-play" aria-pressed={playing} onClick={togglePlay} className={cn(toolbarButton, playing && "border-selected-border bg-selected")}>
-              <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span>
-              {playing ? "Pause" : day >= total ? "Replay mission" : "Play mission"}
-            </button>
-            <SegmentedToggle label="Time-lapse speed" options={SPEED_OPTIONS} value={speed} onChange={setSpeed} dataKey="speed" />
-            {mode === "3d" ? (
+      <Panel id="orbit-panel" aria-labelledby="orbit-title">
+        <PanelHeading
+          eyebrow="HELIOCENTRIC VIEW · POSITIONS FROM EPHEMERIDES"
+          title="Where the crew is"
+          titleId="orbit-title"
+          className="flex-wrap"
+          actions={
+            webgl ? (
               <SegmentedToggle
-                label="Camera view"
-                options={VIEW_OPTIONS}
-                value={viewChoice}
-                onChange={(next) => {
-                  setViewChoice(next);
-                  setViewNonce((nonce) => nonce + 1);
-                }}
-                dataKey="view"
+                label="Rendering"
+                options={MODE_OPTIONS}
+                value={mode}
+                onChange={chooseMode}
+                dataKey="mode"
               />
-            ) : null}
-          </div>
+            ) : null
+          }
+        />
+        <div className="mt-3 mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <button
+            type="button"
+            id="mission-play"
+            aria-pressed={playing}
+            onClick={togglePlay}
+            className={cn(
+              toolbarButton,
+              playing && "border-selected-border bg-selected",
+            )}
+          >
+            <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span>
+            {playing
+              ? "Pause"
+              : day >= total
+                ? "Replay mission"
+                : "Play mission"}
+          </button>
+          <SegmentedToggle
+            label="Time-lapse speed"
+            options={SPEED_OPTIONS}
+            value={speed}
+            onChange={setSpeed}
+            dataKey="speed"
+          />
+          {mode === "3d" ? (
+            <SegmentedToggle
+              label="Camera view"
+              options={VIEW_OPTIONS}
+              value={viewChoice}
+              onChange={(next) => {
+                setViewChoice(next);
+                setViewNonce((nonce) => nonce + 1);
+              }}
+              dataKey="view"
+            />
+          ) : null}
+        </div>
+        {/* The viewport sets the row height; the readout fills it and scrolls if its content is taller. */}
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(280px,340px)] gap-4 max-md:grid-cols-1">
           <OrbitViewport
             geometry={geometry}
             day={day}
@@ -207,20 +307,39 @@ function MissionConsole({ data, geometry, story, day, onDayChange, embedded }: M
             onSlow={() => setFallbackReason((reason) => reason ?? "slow")}
             onUnavailable={() => setFallbackReason("unavailable")}
           />
-          <p id="orbit-notice" aria-live="polite" className="mt-2.5 mb-0 text-caption text-muted">
-            {!webgl || fallbackReason === "unavailable"
-              ? "3D is not available in this browser, so the same geometry is shown as a 2D diagram. "
-              : fallbackReason === "slow" && mode === "2d"
-                ? "3D was rendering slowly on this device, so the view switched to the 2D diagram. Select 3D to try again. "
-                : ""}
-            Distances between bodies are to scale. The Sun and planets are enlarged to stay visible. Simulated mission.
-          </p>
-        </Panel>
-        <LinkReadout geometry={geometry} day={day} delays={delays} maxRoundTripMin={maxRoundTripMin} />
-      </div>
+          <div className="relative min-w-0">
+            <LinkReadout
+              geometry={geometry}
+              day={day}
+              delays={delays}
+              maxRoundTripMin={maxRoundTripMin}
+              className="md:absolute md:inset-0 md:overflow-y-auto"
+            />
+          </div>
+        </div>
+        <p
+          id="orbit-notice"
+          aria-live="polite"
+          className="mt-2.5 mb-0 text-caption text-muted"
+        >
+          {!webgl || fallbackReason === "unavailable"
+            ? "3D is not available in this browser, so the same geometry is shown as a 2D diagram. "
+            : fallbackReason === "slow" && mode === "2d"
+              ? "3D was rendering slowly on this device, so the view switched to the 2D diagram. Select 3D to try again. "
+              : ""}
+          Distances between bodies are to scale. The Sun and planets are
+          enlarged to stay visible. Simulated mission.
+        </p>
+      </Panel>
 
       <div className="mt-4 grid grid-cols-2 items-start gap-4 max-md:grid-cols-1">
-        <StoryPanel story={story} events={data.events} dates={geometry.date} day={day} onSelectDay={selectDay} />
+        <StoryPanel
+          story={story}
+          events={data.events}
+          dates={geometry.date}
+          day={day}
+          onSelectDay={selectDay}
+        />
         <CrewDayPanel data={data} day={day} linkNote={linkNote} />
       </div>
     </div>
