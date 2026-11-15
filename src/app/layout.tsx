@@ -14,7 +14,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>
         <div className="mx-auto w-full max-w-460 min-w-0 px-[clamp(14px,2.8vw,40px)] pb-7 max-md:px-6.5 max-sm:px-4.5 max-sm:pb-5.5 max-xs:px-3.5">
           <SiteHeader />
