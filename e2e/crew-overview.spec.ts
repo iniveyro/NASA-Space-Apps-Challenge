@@ -77,7 +77,6 @@ test.describe("crew overview", () => {
     await page.goto("/");
     await expect(page).toHaveTitle("ASTRA Health · Crew wellness");
     await expect(page.getByRole("heading", { level: 1, name: "Crew overview" })).toBeVisible();
-    await expect(page.locator("#environment-label")).toHaveText("ENVIRONMENT · MICROGRAVITY");
     await expect(selector(page)).toHaveAttribute("data-selected-day", String(TOTAL));
     await expect(selector(page)).toHaveAttribute("data-phase", "landed");
     await expect(page.locator("#mission-day-readout")).toHaveText("Day 942 · 12 Jun 2029 · Landed · Link");

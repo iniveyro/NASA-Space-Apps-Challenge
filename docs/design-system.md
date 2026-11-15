@@ -74,7 +74,7 @@ Canvas and WebGL materials cannot take classes: read the color with `readToken(t
 
 | Component | Use for |
 | --- | --- |
-| `SiteHeader` | Global header (already in `layout.tsx`) |
+| `SiteHeader` | Global header (already in `layout.tsx`); inline A/orbit/heartbeat mark, ASTRA Health wordmark, and UMBRAL mission wordmark |
 | `PageFooter` | Footer at the end of every view |
 | `Panel` | White bordered card (`<article>`) |
 | `PanelHeading` | Eyebrow + h2 + optional actions inside a panel |

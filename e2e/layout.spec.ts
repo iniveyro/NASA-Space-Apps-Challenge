@@ -15,6 +15,26 @@ test.describe("responsive layout", () => {
     });
   }
 
+  test("shows the ASTRA Health logo and UMBRAL wordmark without header metadata", async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const header = page.locator("header");
+    const homeLink = header.getByRole("link", { name: "ASTRA Health home" });
+    await expect(homeLink).toHaveAttribute("href", "/");
+    await expect(header.getByText("ASTRA Health", { exact: true })).toBeVisible();
+    await expect(header.getByText("Mission wellness console", { exact: true })).toBeVisible();
+    await expect(header.getByText("UMBRAL", { exact: true })).toBeVisible();
+    await expect(header.locator("svg[data-brand-symbol]")).toHaveAttribute("viewBox", "0 0 48 48");
+    await expect(header).not.toContainText(/SIMULATED DATA|FICTIONAL|ENVIRONMENT|MICROGRAVITY|MISSION DAY/i);
+    await header.screenshot({ path: testInfo.outputPath("astra-branding-desktop.png") });
+
+    await page.setViewportSize({ width: 320, height: 900 });
+    await expectNoHorizontalOverflow(page);
+    await expect(homeLink).toBeVisible();
+    await expect(header.getByText("UMBRAL", { exact: true })).toBeVisible();
+    await header.screenshot({ path: testInfo.outputPath("astra-branding-mobile.png") });
+  });
+
   test("uses design tokens for the canvas and light gray crew cards", async ({ page }) => {
     await page.goto("/");
     const colors = await page.evaluate(() => ({

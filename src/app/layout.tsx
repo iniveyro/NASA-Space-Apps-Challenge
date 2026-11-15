@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { ENVIRONMENT, MISSION_DAY } from "@/features/crew-health-data";
 import { SiteHeader, THEME_COLOR } from "@/shared/design-system";
 import "./globals.css";
 
@@ -18,7 +17,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en">
       <body>
         <div className="mx-auto w-full max-w-460 min-w-0 px-[clamp(14px,2.8vw,40px)] pb-7 max-md:px-6.5 max-sm:px-4.5 max-sm:pb-5.5 max-xs:px-3.5">
-          <SiteHeader environment={ENVIRONMENT} missionDay={MISSION_DAY} />
+          <SiteHeader />
           <main id="main-content">{children}</main>
         </div>
       </body>
