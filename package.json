@@ -13,6 +13,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@react-three/fiber": "9.8.2",
     "body-highlighter": "3.0.2",
     "next": "16.4.6",
     "react": "19.3.0",
