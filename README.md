@@ -24,7 +24,7 @@ npm run dev     # http://localhost:3000
 Routes:
 
 - `/` — crew overview. Each card links to its profile.
-- `/astronaut/<id>` — profile (`ines`, `kanji`, `malik`, `sofia`). The four profiles are prerendered at build time; unknown ids show a not-found page.
+- `/astronaut/<id>` — profile (`ines`, `kanji`, `malik`, `sofia`). The four profiles are prerendered at build time; unknown ids show a not-found page. `?day=<n>` opens a given mission day, and the crew cards link to the day selected on the overview.
 - `/` — crew overview; the **Crew health / Mission in 3D** switch shows the same mission view in place, driven by the one mission-day selector, so nothing needs a second page.
 - `/mission` — mission geometry: 3D view of the Sun, Earth, Mars and the crew on each mission day, the Earth-link delay, and the story beats. `?day=<n>` opens a given day. Falls back to a 2D diagram without WebGL.
 
@@ -64,7 +64,7 @@ Features are independent folders with a public `index.ts`. Coding agents work on
 ### Prototype boundaries
 
 - Four fictional profiles show demographics, independent health/activity labels, daily heart-rate history, paired blood pressure, temperature, cumulative radiation, and a latest SpO₂ percentage ring.
-- Ten individual readings use deterministic 30-day histories; the 7-day view is the latest week. Blood pressure keeps systolic and diastolic series distinct.
+- The profile's ten readings come from the simulated mission dataset (`data/processed/*.csv`) for a selectable mission day: the last day (942) by default, or `?day=<n>`. The 7- and 30-day histories end on the selected day. SpO₂, activity, and stress are not in the dataset and read "Unknown". Blood pressure keeps systolic and diastolic series distinct.
 - SpO₂ and glucose are simulated point readings, not continuous sensor streams. Mood and stress are self-reported scales, not brain measurements.
 - Brain, Heart, and Whole body are navigation groups for existing metrics, not organ measurements. The body map supports pointer selection; its adjacent buttons are keyboard accessible.
 - Green, amber, and red statuses are authored for this interface, not inferred from thresholds or validated clinical ranges. Missing context remains unknown, and no treatment recommendations are provided.
